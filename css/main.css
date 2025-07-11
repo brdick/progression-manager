@@ -1026,3 +1026,51 @@ option:disabled {
     margin: 12px 0;
   }
 }
+
+/* Server Status Indicator */
+#serverStatus {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-radius: 0;
+  border: none;
+  border-bottom: 2px solid rgba(255, 193, 7, 0.3);
+  background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+  color: #000;
+  text-align: center;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+#serverStatus i {
+  animation: pulse 2s infinite;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Fallback styles for when FontAwesome fails to load */
+.fa-solid:not([class*="fa-"]):before,
+.fa-regular:not([class*="fa-"]):before,
+.fa-brands:not([class*="fa-"]):before {
+  content: "⚠";
+  font-family: Arial, sans-serif;
+}
+
+.fa-spinner:before { content: "⟳"; }
+.fa-gamepad2:before { content: "🎮"; }
+.fa-upload:before { content: "↑"; }
+.fa-triangle-exclamation:before { content: "⚠"; }

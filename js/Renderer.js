@@ -87,14 +87,20 @@ handlebars.registerHelper('lookup', function(...params) {
   {
     if(obj === undefined || obj === null)
     {
-      if(!options.hash.ignoreEmpty) console.warn(`Helper 'lookup' attempted to get property '${prop}' on undefined/null object: [base].${params.join('.')}; base:`, base);
+      // Suppress warnings during initialization or when viewer is not ready
+      if(!options.hash.ignoreEmpty && window.viewer?.initialized !== false) {
+        console.warn(`Helper 'lookup' attempted to get property '${prop}' on undefined/null object: [base].${params.join('.')}; base:`, base);
+      }
       return "";
     }
     if(typeof(obj) == "object")
       obj = obj[prop];
     else
     {
-      if(!options.hash.returnFirstScalar) console.warn(`Helper 'lookup' attempted to get property '${prop}' on a ${typeof(obj)}: [base].${params.join('.')}; base:`, base);
+      // Suppress warnings during initialization or when viewer is not ready
+      if(!options.hash.returnFirstScalar && window.viewer?.initialized !== false) {
+        console.warn(`Helper 'lookup' attempted to get property '${prop}' on a ${typeof(obj)}: [base].${params.join('.')}; base:`, base);
+      }
       return options.hash.returnFirstScalar ? obj : "";
     }
   }

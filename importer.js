@@ -77,7 +77,44 @@ class Importer {
           if (method === 'import')
             return import('./'+finalFile);
           else
-            return fetch(finalFile).then(resp => method === 'json' ? resp.json() : resp.text());
+            return fetch(finalFile).then(resp => {
+              if (!resp.ok) {
+                throw new Error(`HTTP ${resp.status}: ${resp.statusText} when loading ${finalFile}`);
+              }
+              
+              // Check if we got HTML instead of expected content
+              if (method === 'json' || normalFile.endsWith('.js')) {
+                return resp.text().then(text => {
+                  if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                    throw new Error(`Server returned HTML error page instead of ${normalFile} (likely 404/500 error)`);
+                  }
+                  return method === 'json' ? JSON.parse(text) : text;
+                });
+              }
+              
+              return method === 'json' ? resp.json() : resp.text();
+            });
+        })
+        .catch(error => {
+          console.error(`Failed to load ${normalFile}:`, error);
+          
+          // For critical files, provide a more descriptive error
+          if (normalFile.includes('/load.js')) {
+            throw new Error(`Game files are currently unavailable. Server may be down (${error.message})`);
+          }
+          
+          // For templates, provide fallback content
+          if (normalFile.includes('templates/')) {
+            if (normalFile.includes('menuModals.html')) {
+              return '<div class="modal fade" id="loadModal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Import unavailable</h5></div></div></div></div>';
+            }
+            if (normalFile.includes('menuButtons.html')) {
+              return '<button class="btn btn-secondary disabled">Functions unavailable</button>';
+            }
+          }
+          
+          // Re-throw for other files
+          throw error;
         });
       //this.log[normalFile].then(imported => console.debug(`Imported ${normalFile}.`));
     }

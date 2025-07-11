@@ -57,54 +57,71 @@ export default class GenshinManager extends DataManager
   async ensureFullInitialization()
   {
     if (!this.initialized || this.minimalMode) {
-      console.log('Upgrading to full initialization...');
-      
-      // Import essential components
-      const [
-        ListDisplayManager,
-        GenshinAccount,
-        MaterialList,
-        CharacterList, 
-        WeaponList,
-        ArtifactList,
-        TeamList,
-        FurnitureList,
-        FurnitureSetList
-      ] = await Promise.all([
-        window.importer.get(`js/ListDisplayManager.js`).then(m => m.default),
-        window.importer.get(`js/genshin/GenshinAccount.js`).then(m => m.default),
-        window.importer.get(`js/genshin/MaterialList.js`).then(m => m.default),
-        window.importer.get(`js/genshin/CharacterList.js`).then(m => m.default),
-        window.importer.get(`js/genshin/WeaponList.js`).then(m => m.default),
-        window.importer.get(`js/genshin/ArtifactList.js`).then(m => m.default),
-        window.importer.get(`js/genshin/TeamList.js`).then(m => m.default),
-        window.importer.get(`js/genshin/FurnitureList.js`).then(m => m.default),
-        window.importer.get(`js/genshin/FurnitureSetList.js`).then(m => m.default)
-      ]);
-      
-      // Register lists
-      this.registerList(MaterialList);
-      this.registerList(CharacterList);
-      this.registerList(WeaponList);
-      this.registerList(ArtifactList);
-      this.registerList(TeamList);
-      this.registerList(FurnitureList);
-      this.registerList(FurnitureSetList);
-      
-      // Register navigation items
-      this.registerNavItem("Daily Farming", "farming", {self:true});
-      this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
-      this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
-      this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
-      this.registerNavItem("Teams", "teams", {listName:"TeamList"});
-      this.registerNavItem("Materials", "materials", {listName:"MaterialList"});
-      this.registerNavItem("Furniture Sets", "furnitureSets", {listName:"FurnitureSetList"});
-      this.registerNavItem("Furniture", "furniture", {listName:"FurnitureList"});
-      
-      this.minimalMode = false;
-      this.initialized = true;
-      
-      console.log('Full initialization complete');
+      try {
+        console.log('Upgrading to full initialization...');
+        
+        // Import essential components
+        const [
+          ListDisplayManager,
+          GenshinAccount,
+          MaterialList,
+          CharacterList, 
+          WeaponList,
+          ArtifactList,
+          TeamList,
+          FurnitureList,
+          FurnitureSetList
+        ] = await Promise.all([
+          window.importer.get(`js/ListDisplayManager.js`).then(m => m.default),
+          window.importer.get(`js/genshin/GenshinAccount.js`).then(m => m.default),
+          window.importer.get(`js/genshin/MaterialList.js`).then(m => m.default),
+          window.importer.get(`js/genshin/CharacterList.js`).then(m => m.default),
+          window.importer.get(`js/genshin/WeaponList.js`).then(m => m.default),
+          window.importer.get(`js/genshin/ArtifactList.js`).then(m => m.default),
+          window.importer.get(`js/genshin/TeamList.js`).then(m => m.default),
+          window.importer.get(`js/genshin/FurnitureList.js`).then(m => m.default),
+          window.importer.get(`js/genshin/FurnitureSetList.js`).then(m => m.default)
+        ]);
+        
+        // Register lists
+        this.registerList(MaterialList);
+        this.registerList(CharacterList);
+        this.registerList(WeaponList);
+        this.registerList(ArtifactList);
+        this.registerList(TeamList);
+        this.registerList(FurnitureList);
+        this.registerList(FurnitureSetList);
+        
+        // Register navigation items
+        this.registerNavItem("Daily Farming", "farming", {self:true});
+        this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
+        this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
+        this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
+        this.registerNavItem("Teams", "teams", {listName:"TeamList"});
+        this.registerNavItem("Materials", "materials", {listName:"MaterialList"});
+        this.registerNavItem("Furniture Sets", "furnitureSets", {listName:"FurnitureSetList"});
+        this.registerNavItem("Furniture", "furniture", {listName:"FurnitureList"});
+        
+        this.minimalMode = false;
+        this.initialized = true;
+        
+        console.log('Full initialization complete');
+      } catch (error) {
+        console.error('Failed to fully initialize GenshinManager:', error);
+        
+        // Show user-friendly error
+        window.serverStatus?.showStatus(true, 'Game data failed to load completely. Some features may be unavailable.');
+        
+        // Create minimal navigation if possible
+        try {
+          this.registerNavItem("Daily Farming", "farming", {self:true});
+        } catch (navError) {
+          console.error('Failed to create basic navigation:', navError);
+        }
+        
+        // Mark as initialized even if partial to prevent infinite retry
+        this.initialized = true;
+      }
     }
   }
   
@@ -260,6 +277,10 @@ export default class GenshinManager extends DataManager
   
   createAccount(id)
   {
+    if (typeof GenshinAccount === 'undefined') {
+      console.error('GenshinAccount class not loaded, cannot create account');
+      throw new Error('Required game classes not loaded. Please refresh the page.');
+    }
     return new GenshinAccount(id, {viewer:this});
   }
   

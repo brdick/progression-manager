@@ -64,6 +64,40 @@ if(!window.importer.productionMode)
 // Load site-wide settings.
 window.generalSettings = JSON.parse(window.localStorage.getItem("generalSettings") ?? "{}") ?? {};
 
+// Server Status Monitoring
+window.serverStatus = {
+  hasIssues: false,
+  showStatus: function(show, message) {
+    const statusEl = document.getElementById('serverStatus');
+    if (show) {
+      this.hasIssues = true;
+      if (message) {
+        statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Server Issues:</strong> ${message}`;
+      }
+      statusEl.classList.remove('d-none');
+    } else {
+      this.hasIssues = false;
+      statusEl.classList.add('d-none');
+    }
+  },
+  
+  checkConnection: async function() {
+    try {
+      const response = await fetch('css/main.css', { method: 'HEAD', cache: 'no-cache' });
+      if (response.ok) {
+        this.showStatus(false);
+        return true;
+      } else {
+        this.showStatus(true, `Server responding with HTTP ${response.status}`);
+        return false;
+      }
+    } catch (error) {
+      this.showStatus(true, 'Server is unreachable');
+      return false;
+    }
+  }
+};
+
 let darkModeToggle = document.getElementById("darkModeToggle");
 darkModeToggle?.addEventListener("change", event => {
   let link = document.getElementById("lightDark");
@@ -103,6 +137,7 @@ if(typeof(Storage) !== "undefined")
       console.log(`Loading game '${selectBtn.dataset.game}'.`);
       window.generalSettings.game = selectBtn.dataset.game;
       window.localStorage.setItem("generalSettings", JSON.stringify(window.generalSettings));
+      
       if(window.viewer)
       {
         console.log(`A manager is already loaded. Reloading the page into the new manager to conserve memory.`);
@@ -110,27 +145,93 @@ if(typeof(Storage) !== "undefined")
       }
       else
       {
-        document.getElementById("gameIcon").innerHTML = `<img src="img/gameIcons/${selectBtn.dataset.game}.webp"/>`;
-        const { addEventListeners, init } = await window.importer.get(`js/${selectBtn.dataset.game}/load.js`);
-        
-        let modalsHTML = await window.importer.get(`templates/${selectBtn.dataset.game}/menuModals.html`);
-        let modalsTemplate = handlebars.compile(modalsHTML);
-        document.getElementById("menuModalContainer").innerHTML = modalsTemplate();
-        
-        let buttonsHTML = await window.importer.get(`templates/${selectBtn.dataset.game}/menuButtons.html`);
-        let buttonsTemplate = handlebars.compile(buttonsHTML);
-        document.getElementById("menuButtonContainer").innerHTML = buttonsTemplate();
-        
-        let css = document.head.appendChild(document.createElement("link"));
-        css.type = "text/css";
-        css.rel = "stylesheet";
-        css.href = `css/${selectBtn.dataset.game}.css`;
-        document.title = `${selectBtn.dataset.game.at(0).toUpperCase()+selectBtn.dataset.game.slice(1)} Manager`;
-        
-        await baseAddEventListeners();
-        await addEventListeners();
-        await init();
-        await loadPage();
+        try {
+          // Show loading indicator
+          selectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+          selectBtn.disabled = true;
+          
+          // Check server connectivity before proceeding
+          const serverOk = await window.serverStatus.checkConnection();
+          if (!serverOk) {
+            throw new Error('Server is currently unreachable. Please check your internet connection and try again.');
+          }
+          
+          document.getElementById("gameIcon").innerHTML = `<img src="img/gameIcons/${selectBtn.dataset.game}.webp"/>`;
+          
+          // Try to load game files with error handling
+          const { addEventListeners, init } = await window.importer.get(`js/${selectBtn.dataset.game}/load.js`);
+          
+          let modalsHTML, buttonsHTML;
+          try {
+            modalsHTML = await window.importer.get(`templates/${selectBtn.dataset.game}/menuModals.html`);
+            let modalsTemplate = handlebars.compile(modalsHTML);
+            document.getElementById("menuModalContainer").innerHTML = modalsTemplate();
+          } catch (error) {
+            console.warn('Failed to load modal templates, using fallback');
+            document.getElementById("menuModalContainer").innerHTML = `
+              <div class="modal fade" id="loadModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Import Data</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Data import temporarily unavailable due to server issues.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+          
+          try {
+            buttonsHTML = await window.importer.get(`templates/${selectBtn.dataset.game}/menuButtons.html`);
+            let buttonsTemplate = handlebars.compile(buttonsHTML);
+            document.getElementById("menuButtonContainer").innerHTML = buttonsTemplate();
+          } catch (error) {
+            console.warn('Failed to load button templates, using fallback');
+            document.getElementById("menuButtonContainer").innerHTML = `
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loadModal">
+                <i class="fa-solid fa-upload"></i> Import
+              </button>
+            `;
+          }
+          
+          let css = document.head.appendChild(document.createElement("link"));
+          css.type = "text/css";
+          css.rel = "stylesheet";
+          css.href = `css/${selectBtn.dataset.game}.css`;
+          document.title = `${selectBtn.dataset.game.at(0).toUpperCase()+selectBtn.dataset.game.slice(1)} Manager`;
+          
+          await baseAddEventListeners();
+          await addEventListeners();
+          await init();
+          await loadPage();
+        } catch (error) {
+          console.error('Failed to load game:', error);
+          
+          // Restore button state
+          selectBtn.innerHTML = `<i class="fa-solid fa-gamepad2"></i> ${selectBtn.dataset.game.charAt(0).toUpperCase() + selectBtn.dataset.game.slice(1)}`;
+          selectBtn.disabled = false;
+          
+          // Show error message to user
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+          errorDiv.innerHTML = `
+            <strong>Game Failed to Load</strong><br>
+            ${error.message || 'Server is currently unavailable. Please try again later.'}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          `;
+          document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.container').firstChild);
+          
+          // Auto-hide after 5 seconds
+          setTimeout(() => {
+            if (errorDiv.parentNode) {
+              errorDiv.remove();
+            }
+          }, 5000);
+        }
       }
     });
     if(window.generalSettings.game == selectBtn.dataset.game)
@@ -275,6 +376,15 @@ async function loadPage()
   // Set up nav.
   let toClick = 0;
   let navLinks = document.querySelectorAll(".pane-select");
+  
+  // Safety check for navigation elements
+  if (navLinks.length === 0) {
+    console.warn('No navigation links found, waiting for page initialization...');
+    // Retry after a short delay
+    setTimeout(() => loadPage(), 500);
+    return;
+  }
+  
   for(let i=0; i<navLinks.length; i++)
   {
     navLinks[i].addEventListener("click", event => {
@@ -294,7 +404,16 @@ async function loadPage()
     if(navLinks[i].hash == location.hash)
       toClick = i;
   }
-  setTimeout(()=>navLinks[toClick].dispatchEvent(new Event("click")), 1);
+  
+  // Safety check before dispatching click event
+  if (navLinks[toClick]) {
+    setTimeout(()=>navLinks[toClick].dispatchEvent(new Event("click")), 1);
+  } else {
+    console.warn('Target navigation link not found, using default');
+    if (navLinks.length > 0) {
+      setTimeout(()=>navLinks[0].dispatchEvent(new Event("click")), 1);
+    }
+  }
   
   // TODO: Back/forward browser buttons don't work.
 
@@ -314,4 +433,7 @@ async function loadPage()
       //history.replaceState({}, "", location.pathname + location.hash);
     }*/
   }
+  
+  // Check server status on page load
+  window.serverStatus.checkConnection();
 }

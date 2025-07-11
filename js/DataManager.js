@@ -24,6 +24,12 @@ export default class DataManager extends UIController
   {
     super();
     this.elements['nav'] = document.getElementById("navigation");
+    if (!this.elements['nav']) {
+      console.error("Navigation element not found, creating fallback");
+      this.elements['nav'] = document.createElement("ul");
+      this.elements['nav'].id = "navigation";
+      this.elements['nav'].className = "navbar-nav me-auto mb-2 mb-lg-0";
+    }
     this.elements['nav'].replaceChildren();
     this.elements['content'] = document.getElementById("content");
     this.elements['popup'] = document.getElementById("popup");
@@ -72,6 +78,11 @@ export default class DataManager extends UIController
         console.warn(`Default navigation link is already set, overwriting this data:`, this.navigation['']);
       this.navigation[''] = this.navigation[`#${hash}`];
     }
+    if (!this.elements['nav']) {
+      console.error(`Cannot register navigation item ${hash} - navigation container missing`);
+      return;
+    }
+    
     this.navigation[`#${hash}`].element = this.elements['nav'].insertBefore(document.createElement("li"), tempNav.length ? tempNav[tempNav.length-1].element.nextSibling : this.elements['nav'].firstChild);
     this.navigation[`#${hash}`].element.classList.add("nav-item");
     let link = this.navigation[`#${hash}`].element.appendChild(document.createElement("a"));
