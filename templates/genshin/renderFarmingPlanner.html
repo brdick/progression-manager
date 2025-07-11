@@ -132,82 +132,93 @@
   <div class="container-fluid mb-4">
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5><i class="fa-solid fa-star"></i> Priority Farming Recommendations</h5>
+        <h5><i class="fa-solid fa-star"></i> Today's Farming Priorities</h5>
         <button class="btn btn-outline-primary btn-sm" id="setPrioritiesBtn">
-          <i class="fa-solid fa-gear"></i> Set Priorities
+          <i class="fa-solid fa-gear"></i> Manage Priorities
         </button>
       </div>
       <div class="card-body">
         {{#if summary.recommendations.length}}
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Priority</th>
-                  <th>Item</th>
-                  <th>Material</th>
-                  <th>Need</th>
-                  <th>Have</th>
-                  <th>Missing</th>
-                  <th>Quick Add</th>
-                </tr>
-              </thead>
-              <tbody>
-                {{#each summary.recommendations}}
-                  <tr class="priority-{{priority}}">
-                    <td>
-                      <span class="badge bg-{{#if (gt priority 7)}}danger{{else if (gt priority 4)}}warning{{else}}secondary{{/if}}">
-                        {{priority}}/10
+          <div class="row g-3">
+            {{#each summary.recommendations}}
+              <div class="col-lg-6 col-xl-4">
+                <div class="recommendation-card priority-{{priority}} h-100">
+                  <div class="card-content">
+                    <!-- Priority Badge -->
+                    <div class="priority-badge">
+                      <span class="priority-number {{#if (gt priority 7)}}urgent{{else if (gt priority 4)}}high{{else}}normal{{/if}}">
+                        {{priority}}
                       </span>
-                    </td>
-                    <td>
+                    </div>
+                    
+                    <!-- Item Info -->
+                    <div class="item-section">
                       {{#if character}}
-                        <div class="d-flex align-items-center">
-                          <img src="{{character.image}}" alt="{{character.name}}" class="item-icon-sm me-2">
-                          {{character.name}}
+                        <div class="item-info character-item">
+                          <img src="{{character.image}}" alt="{{character.name}}" class="item-avatar">
+                          <div class="item-details">
+                            <h6 class="item-name">{{character.name}}</h6>
+                            <span class="item-type"><i class="fa-solid fa-user"></i> Character</span>
+                          </div>
                         </div>
                       {{/if}}
                       {{#if weapon}}
-                        <div class="d-flex align-items-center">
-                          <img src="{{weapon.image}}" alt="{{weapon.name}}" class="item-icon-sm me-2">
-                          {{weapon.name}}
+                        <div class="item-info weapon-item">
+                          <img src="{{weapon.image}}" alt="{{weapon.name}}" class="item-avatar">
+                          <div class="item-details">
+                            <h6 class="item-name">{{weapon.name}}</h6>
+                            <span class="item-type"><i class="fa-solid fa-sword"></i> Weapon</span>
+                          </div>
                         </div>
                       {{/if}}
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <img src="{{material.image}}" alt="{{material.name}}" class="material-icon-sm me-2">
-                        {{material.name}}
+                    </div>
+                    
+                    <!-- Material Info -->
+                    <div class="material-section">
+                      <div class="material-info">
+                        <img src="{{material.image}}" alt="{{material.name}}" class="material-icon">
+                        <div class="material-details">
+                          <span class="material-name">{{material.name}}</span>
+                          <div class="material-stats">
+                            <span class="need-amount">Need: <strong>{{needed}}</strong></span>
+                            <span class="have-amount">Have: <strong>{{available}}</strong></span>
+                          </div>
+                        </div>
                       </div>
-                    </td>
-                    <td><span class="fw-bold">{{needed}}</span></td>
-                    <td>{{available}}</td>
-                    <td>
+                      
                       {{#if deficit}}
-                        <span class="text-danger fw-bold">{{deficit}}</span>
+                        <div class="deficit-indicator">
+                          <span class="deficit-amount">Missing: {{deficit}}</span>
+                        </div>
                       {{else}}
-                        <span class="text-success">✓</span>
+                        <div class="complete-indicator">
+                          <i class="fa-solid fa-check"></i> Complete
+                        </div>
                       {{/if}}
-                    </td>
-                    <td>
-                      <div class="btn-group" role="group">
-                        <button class="btn btn-outline-success btn-sm quick-add" data-material="{{material.key}}" data-amount="1">+1</button>
-                        <button class="btn btn-outline-success btn-sm quick-add" data-material="{{material.key}}" data-amount="5">+5</button>
-                        <button class="btn btn-outline-success btn-sm quick-add" data-material="{{material.key}}" data-amount="10">+10</button>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="actions-section">
+                      <div class="quick-add-buttons">
+                        <button class="quick-add-btn" data-material="{{material.key}}" data-amount="1">+1</button>
+                        <button class="quick-add-btn" data-material="{{material.key}}" data-amount="5">+5</button>
+                        <button class="quick-add-btn" data-material="{{material.key}}" data-amount="10">+10</button>
                       </div>
-                    </td>
-                  </tr>
-                {{/each}}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {{/each}}
           </div>
         {{else}}
-          <div class="text-center py-4">
-            <i class="fa-solid fa-check-circle text-success fa-3x mb-3"></i>
-            <h5>All Set!</h5>
-            <p class="text-muted">No high-priority materials need to be farmed today, or you haven't set any priorities yet.</p>
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <h5>All Caught Up!</h5>
+            <p class="text-muted">No materials need farming today, or you haven't set any priorities yet.</p>
             <button class="btn btn-primary" id="setPrioritiesBtn2">
-              <i class="fa-solid fa-gear"></i> Set Character & Weapon Priorities
+              <i class="fa-solid fa-gear"></i> Set Your Priorities
             </button>
           </div>
         {{/if}}
@@ -247,34 +258,330 @@
 </div>
 
 <style>
-.item-icon-sm {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+/* Modern Card-based Farming Planner Styles */
+.farming-planner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px 0;
 }
 
-.material-icon-sm {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+.farming-planner .card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.95);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.domain-item {
+.farming-planner .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+/* Recommendation Cards */
+.recommendation-card {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.recommendation-card.priority-10,
+.recommendation-card.priority-9 {
+  border-left: 4px solid #dc3545;
+  background: linear-gradient(145deg, #fff5f5 0%, #ffffff 100%);
+}
+
+.recommendation-card.priority-8,
+.recommendation-card.priority-7,
+.recommendation-card.priority-6 {
+  border-left: 4px solid #ffc107;
+  background: linear-gradient(145deg, #fffcf0 0%, #ffffff 100%);
+}
+
+.recommendation-card.priority-5,
+.recommendation-card.priority-4,
+.recommendation-card.priority-3,
+.recommendation-card.priority-2,
+.recommendation-card.priority-1 {
+  border-left: 4px solid #6c757d;
+  background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.card-content {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Priority Badge */
+.priority-badge {
+  position: absolute;
+  top: -8px;
+  right: 16px;
+  z-index: 10;
+}
+
+.priority-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.priority-number.urgent {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.priority-number.high {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.priority-number.normal {
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+}
+
+/* Item Section */
+.item-section {
+  margin-top: 12px;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.item-avatar:hover {
+  transform: scale(1.1);
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.item-type {
+  font-size: 12px;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Material Section */
+.material-section {
+  padding: 16px;
+  background: rgba(108, 117, 125, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(108, 117, 125, 0.1);
+}
+
+.material-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.material-icon {
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.material-name {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.material-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.need-amount,
+.have-amount {
+  color: #6c757d;
+}
+
+.deficit-indicator {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.complete-indicator {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Actions Section */
+.actions-section {
+  margin-top: auto;
+}
+
+.quick-add-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.quick-add-btn {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid #e9ecef;
+  background: white;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #495057;
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.quick-add-btn:hover {
+  border-color: #28a745;
+  background: #28a745;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.empty-icon {
+  font-size: 64px;
+  color: #dee2e6;
+  margin-bottom: 20px;
+}
+
+.empty-state h5 {
+  color: #495057;
+  margin-bottom: 12px;
+}
+
+.empty-state .btn {
+  margin-top: 20px;
+  border-radius: 25px;
+  padding: 12px 24px;
+  font-weight: 600;
+}
+
+/* Domain Items */
+.domain-item {
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  background: white;
+  border: 1px solid #e9ecef !important;
 }
 
 .domain-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
-.priority-10 { background-color: rgba(220, 53, 69, 0.1); }
-.priority-9 { background-color: rgba(220, 53, 69, 0.08); }
-.priority-8 { background-color: rgba(255, 193, 7, 0.1); }
-.priority-7 { background-color: rgba(255, 193, 7, 0.08); }
-
-.quick-add:hover {
-  transform: scale(1.05);
+/* Header Styling */
+.farming-planner h2 {
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 8px;
 }
+
+.farming-planner .text-muted {
+  color: rgba(255,255,255,0.8) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .recommendation-card {
+    margin-bottom: 16px;
+  }
+  
+  .card-content {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .quick-add-buttons {
+    flex-direction: column;
+  }
+  
+  .material-stats {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Animation for new items */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recommendation-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.recommendation-card:nth-child(1) { animation-delay: 0.1s; }
+.recommendation-card:nth-child(2) { animation-delay: 0.2s; }
+.recommendation-card:nth-child(3) { animation-delay: 0.3s; }
 </style>

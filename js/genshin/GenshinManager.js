@@ -454,7 +454,7 @@ export default class GenshinManager extends DataManager
     });
     
     // Quick add buttons
-    const quickAddButtons = document.querySelectorAll('.quick-add');
+    const quickAddButtons = document.querySelectorAll('.quick-add-btn');
     quickAddButtons.forEach(button => {
       button.addEventListener('click', (e) => {
         const materialKey = e.target.dataset.material;

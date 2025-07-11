@@ -295,39 +295,20 @@ export default class FarmingPlanner extends UIController
     }
   }
   
-  // Get farming summary for today
+  // Get farming summary for today with smart filtering
   getFarmingSummary()
   {
     try {
       const farmable = this.getTodaysFarmableMaterials();
-      const recommendations = this.getPrioritizedRecommendations();
       const today = this.viewer.today();
       
-      // Filter recommendations to only show farmable today
-      const todaysRecommendations = recommendations.filter(rec => {
-        try {
-          const material = rec.material;
-          
-          // Check if material is farmable today
-          if(material.days && material.days.includes(today)) return true;
-          
-          // Check if it's available due to double events
-          if(this.doubleEvents.talent && material.shorthand && Object.keys(GenshinLootData.mastery).includes(material.shorthand)) return true;
-          if(this.doubleEvents.weapon && material.shorthand && Object.keys(GenshinLootData.forgery).includes(material.shorthand)) return true;
-          if(this.doubleEvents.character && (material.type === 'boss' || material.type === 'flora')) return true;
-          if(this.doubleEvents.experience && material.type === 'leyline') return true;
-          
-          return false;
-        } catch (error) {
-          console.warn('Error filtering recommendation:', error);
-          return false;
-        }
-      });
+      // Get smart filtered recommendations
+      const smartRecommendations = this.getSmartFilteredRecommendations();
       
       return {
         today: today,
         farmable: farmable,
-        recommendations: todaysRecommendations.slice(0, 15), // Limit to top 15 for performance
+        recommendations: smartRecommendations,
         doubleEvents: this.doubleEvents
       };
     } catch (error) {
@@ -339,5 +320,114 @@ export default class FarmingPlanner extends UIController
         doubleEvents: this.doubleEvents || { character: false, talent: false, weapon: false, experience: false }
       };
     }
+  }
+
+  // Smart filtering logic - only show what's actually relevant today
+  getSmartFilteredRecommendations()
+  {
+    try {
+      const today = this.viewer.today();
+      const allRecommendations = this.getPrioritizedRecommendations();
+      
+      // Filter to only show farmable and relevant items
+      const smartFiltered = allRecommendations.filter(rec => {
+        try {
+          const material = rec.material;
+          
+          // Skip if no deficit (nothing needed)
+          if (rec.deficit <= 0) return false;
+          
+          // Skip if priority is 0 (user doesn't want to farm this)
+          if (rec.priority <= 0) return false;
+          
+          // Check if material is farmable today
+          const isFarmableToday = this.isMaterialFarmableToday(material, today);
+          if (!isFarmableToday) return false;
+          
+          return true;
+        } catch (error) {
+          console.warn('Error filtering recommendation:', error);
+          return false;
+        }
+      });
+      
+      // Sort by priority (high to low), then by deficit (high to low)
+      smartFiltered.sort((a, b) => {
+        if (a.priority !== b.priority) return b.priority - a.priority;
+        return b.deficit - a.deficit;
+      });
+      
+      // Limit results to prevent UI overload
+      const maxResults = 20;
+      return smartFiltered.slice(0, maxResults);
+      
+    } catch (error) {
+      console.error('Error getting smart filtered recommendations:', error);
+      return [];
+    }
+  }
+  
+  // Check if a material can be farmed today
+  isMaterialFarmableToday(material, today)
+  {
+    try {
+      // Handle different material types
+      const materialKey = material.key || material.shorthand;
+      
+      // Check domain materials (talent books)
+      if (material.days && material.days.includes(today)) {
+        return true;
+      }
+      
+      // Check if available due to double events
+      if (this.doubleEvents.talent && this.isTalentMaterial(materialKey)) {
+        return true;
+      }
+      
+      if (this.doubleEvents.weapon && this.isWeaponMaterial(materialKey)) {
+        return true;
+      }
+      
+      if (this.doubleEvents.character && this.isCharacterMaterial(material)) {
+        return true;
+      }
+      
+      if (this.doubleEvents.experience && this.isExperienceMaterial(material)) {
+        return true;
+      }
+      
+      // World bosses, ley lines, and local specialties are always farmable
+      if (material.type === 'boss' || material.type === 'leyline' || material.type === 'flora') {
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('Error checking if material is farmable today:', error);
+      return false;
+    }
+  }
+  
+  // Helper methods to identify material types
+  isTalentMaterial(materialKey)
+  {
+    return Object.keys(GenshinLootData.mastery || {}).includes(materialKey);
+  }
+  
+  isWeaponMaterial(materialKey)
+  {
+    return Object.keys(GenshinLootData.forgery || {}).includes(materialKey);
+  }
+  
+  isCharacterMaterial(material)
+  {
+    return material.type === 'boss' || material.type === 'flora' || 
+           (material.category && material.category.includes('ascension'));
+  }
+  
+  isExperienceMaterial(material)
+  {
+    return material.type === 'leyline' || 
+           (material.key && material.key.includes('Experience'));
   }
 }
