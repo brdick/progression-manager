@@ -5,7 +5,7 @@ handlebars.registerHelper("uuid", (item, options) => item instanceof UIControlle
 handlebars.registerHelper('toParam', (item, options) => item instanceof UIController ? item.uuid : typeof(item) == "object" ? item?.toString()??"" : item);
 
 export default class UIController {
-  static dontSerialize = ["uuid","importing","delayedUpdates","dependents","memory","_viewer"];
+  static dontSerialize = ["uuid","importing","delayedUpdates","dependents","memory","_viewer","_cachedJSON","_lastSerialized","_serializationHash"];
   static templateName;
   static templatePartials = [];
   
@@ -28,6 +28,9 @@ export default class UIController {
   dependents;
   memory;
   _viewer;
+  _cachedJSON;
+  _lastSerialized;
+  _serializationHash;
   
   get viewer() { return this._viewer; }
   set viewer(val) { this._viewer = val; }
@@ -127,6 +130,9 @@ export default class UIController {
   */
   update(field, value, action, options={})
   {
+    // Clear serialization cache when object is modified
+    this._invalidateCache();
+    
     field = this.parseProperty(field, {create: action!="notify"});
     value = this.beforeUpdate(field, value, action, options);
     let needsUpdate = false;
@@ -409,6 +415,14 @@ export default class UIController {
   
   toJSON()
   {
+    // Generate a simple hash of key properties to detect changes
+    const currentHash = this._generateSerializationHash();
+    
+    // Return cached version if nothing changed
+    if (this._cachedJSON && this._serializationHash === currentHash) {
+      return this._cachedJSON;
+    }
+    
     let result = {__class__: this.constructor.name};
     let serializing = new Set();
     
@@ -436,23 +450,42 @@ export default class UIController {
         
         // Don't serialize complex objects that might cause issues
         if (value.constructor && value.constructor.name && 
-            ['HTMLElement', 'Node', 'Element'].includes(value.constructor.name)) {
+            ['HTMLElement', 'Node', 'Element', 'Document', 'Window'].includes(value.constructor.name)) {
           return "[DOM Element]";
+        }
+        
+        // Limit serialization depth for large objects
+        if (serializing.size > 100) {
+          return "[Max Depth Reached]";
         }
         
         serializing.add(value);
         try {
           if (Array.isArray(value)) {
-            const result = value.map((item, index) => serializeProperty({[index]: item}, index)).filter(item => item !== undefined);
+            // Limit array size to prevent memory issues
+            const maxLength = 1000;
+            const limitedArray = value.length > maxLength ? value.slice(0, maxLength) : value;
+            const result = limitedArray.map((item, index) => serializeProperty({[index]: item}, index)).filter(item => item !== undefined);
+            if (value.length > maxLength) {
+              result.push(`[... ${value.length - maxLength} more items]`);
+            }
             serializing.delete(value);
             return result;
           } else {
             const result = {};
+            let propCount = 0;
+            const maxProps = 200; // Limit object properties
+            
             for (let subKey in value) {
+              if (propCount >= maxProps) {
+                result['[... more properties]'] = `${Object.keys(value).length - maxProps} more`;
+                break;
+              }
               if (value.hasOwnProperty(subKey)) {
                 const serialized = serializeProperty(value, subKey);
                 if (serialized !== undefined) {
                   result[subKey] = serialized;
+                  propCount++;
                 }
               }
             }
@@ -467,7 +500,7 @@ export default class UIController {
       
       return undefined;
     };
-    
+
     for(let key of Object.keys(this)) {
       if(this.constructor.dontSerialize.indexOf(key) === -1) {
         const serialized = serializeProperty(this, key);
@@ -477,6 +510,32 @@ export default class UIController {
       }
     }
     
+    // Cache the result
+    this._cachedJSON = result;
+    this._serializationHash = currentHash;
+    this._lastSerialized = Date.now();
+    
     return result;
+  }
+  
+  _generateSerializationHash() {
+    // Simple hash based on key properties to detect changes
+    let hashInput = '';
+    for(let key of Object.keys(this)) {
+      if(this.constructor.dontSerialize.indexOf(key) === -1) {
+        const value = this[key];
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+          hashInput += key + ':' + value + ';';
+        } else if (value && typeof value === 'object') {
+          hashInput += key + ':' + JSON.stringify(value).length + ';';
+        }
+      }
+    }
+    return hashInput.length.toString();
+  }
+  
+  _invalidateCache() {
+    this._cachedJSON = null;
+    this._serializationHash = null;
   }
 }

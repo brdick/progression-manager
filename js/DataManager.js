@@ -5,7 +5,7 @@ const {default:UIController} = await window.importer.get(`js/UIController.js`);
 export default class DataManager extends UIController
 {
   static Renderer = Renderer; // Only here so the browser console can access it.
-  static dontSerialize = super.dontSerialize.concat(["listClasses","navigation","elements","stickyElements","errors","storeTimeout"]);
+  static dontSerialize = super.dontSerialize.concat(["listClasses","navigation","elements","stickyElements","errors","storeTimeout","_cachedJSON","_lastSerialized","_serializationHash"]);
   
   dataVersion = 2;
   currentView;
@@ -318,12 +318,45 @@ export default class DataManager extends UIController
       return false;
     }
     
-    //window.localStorage.setItem(`${this.constructor.name}Data`, `{${serversArray.join(',')}}`);
-    //window.localStorage.setItem(`${this.constructor.name}Data`, JSON.stringify(this.accounts));
-    //window.localStorage.setItem(`${this.constructor.name}Settings`, JSON.stringify(this.settings));
-    window.localStorage.setItem(`${this.constructor.name}`, JSON.stringify(this));
-    console.log(`Local data saved.`);
-    return true;
+    try {
+      // Use optimized serialization to reduce memory usage
+      const optimizedData = JSON.stringify(this);
+      
+      // Check if the data is too large for localStorage (typically 5-10MB limit)
+      const dataSize = new Blob([optimizedData]).size;
+      const maxSize = 5 * 1024 * 1024; // 5MB limit
+      
+      if (dataSize > maxSize) {
+        console.warn(`Data size (${(dataSize / 1024 / 1024).toFixed(2)}MB) exceeds localStorage limit. Attempting compact storage...`);
+        
+        // Try to store only essential data
+        const essentialData = {
+          __class__: this.constructor.name,
+          dataVersion: this.dataVersion,
+          settings: this.settings,
+          accounts: this.accounts
+        };
+        
+        const compactData = JSON.stringify(essentialData);
+        const compactSize = new Blob([compactData]).size;
+        
+        if (compactSize > maxSize) {
+          console.error(`Even compact data (${(compactSize / 1024 / 1024).toFixed(2)}MB) is too large for localStorage. Save failed.`);
+          return false;
+        }
+        
+        window.localStorage.setItem(`${this.constructor.name}`, compactData);
+        console.log(`Compact local data saved (${(compactSize / 1024 / 1024).toFixed(2)}MB).`);
+      } else {
+        window.localStorage.setItem(`${this.constructor.name}`, optimizedData);
+        console.log(`Local data saved (${(dataSize / 1024 / 1024).toFixed(2)}MB).`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to save to localStorage:', error);
+      return false;
+    }
   }
   
   retrieve()
