@@ -378,80 +378,121 @@ export default class GenshinManager extends DataManager
   
   async showPrioritySettingsModal()
   {
-    const characters = this.lists.CharacterList.items();
-    const weapons = this.lists.WeaponList.items();
-    
-    await Renderer.rerender(
-      this.elements.popup.querySelector(".modal-content"),
-      { 
-        characters: characters,
-        weapons: weapons,
-        priorities: this.farmingPlanner.priorities
-      },
-      {
-        template: "genshin/renderPrioritySettingsModal",
-        showPopup: true
+    try {
+      const characters = this.lists.CharacterList.items();
+      const weapons = this.lists.WeaponList.items();
+      
+      // Ensure farmingPlanner priorities exist
+      if (!this.farmingPlanner.priorities) {
+        this.farmingPlanner.priorities = {
+          characters: {},
+          weapons: {}
+        };
       }
-    );
-    
-    // Add event listeners for the modal
-    this.addPriorityModalEventListeners();
+      
+      await Renderer.rerender(
+        this.elements.popup.querySelector(".modal-content"),
+        { 
+          characters: characters,
+          weapons: weapons,
+          priorities: this.farmingPlanner.priorities
+        },
+        {
+          template: "genshin/renderPrioritySettingsModal",
+          showPopup: true
+        }
+      );
+      
+      // Add event listeners for the modal
+      this.addPriorityModalEventListeners();
+    } catch (error) {
+      console.error('Error showing priority settings modal:', error);
+      // Show a simple fallback modal
+      this.elements.popup.querySelector(".modal-content").innerHTML = `
+        <div class="modal-header">
+          <h5 class="modal-title">Priority Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            Priority settings are temporarily unavailable. Please try again later.
+          </div>
+        </div>
+      `;
+    }
   }
   
   addPriorityModalEventListeners()
   {
-    // Priority sliders
-    const prioritySliders = document.querySelectorAll('.priority-slider');
-    prioritySliders.forEach(slider => {
-      slider.addEventListener('input', (e) => {
-        const type = e.target.dataset.type;
-        const key = e.target.dataset.key;
-        const value = parseInt(e.target.value);
-        
-        // Update the display value
-        const valueElement = e.target.parentElement.querySelector('.priority-value');
-        if(valueElement) valueElement.textContent = value;
-        
-        // Update the priority
-        if(type === 'character') {
-          this.farmingPlanner.setCharacterPriority(key, value);
-        } else if(type === 'weapon') {
-          this.farmingPlanner.setWeaponPriority(key, value);
-        }
-      });
-    });
-    
-    // Bulk priority buttons
-    const bulkButtons = document.querySelectorAll('.bulk-priority');
-    bulkButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        const value = parseInt(e.target.dataset.value);
-        
-        // Update all sliders and priorities
-        prioritySliders.forEach(slider => {
-          slider.value = value;
-          const valueElement = slider.parentElement.querySelector('.priority-value');
-          if(valueElement) valueElement.textContent = value;
-          
-          const type = slider.dataset.type;
-          const key = slider.dataset.key;
-          
-          if(type === 'character') {
-            this.farmingPlanner.setCharacterPriority(key, value);
-          } else if(type === 'weapon') {
-            this.farmingPlanner.setWeaponPriority(key, value);
+    try {
+      // Priority sliders
+      const prioritySliders = document.querySelectorAll('.priority-slider');
+      prioritySliders.forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          try {
+            const type = e.target.dataset.type;
+            const key = e.target.dataset.key;
+            const value = parseInt(e.target.value);
+            
+            // Update the display value
+            const valueElement = e.target.parentElement.querySelector('.priority-value');
+            if(valueElement) valueElement.textContent = value;
+            
+            // Update the priority
+            if(type === 'character') {
+              this.farmingPlanner.setCharacterPriority(key, value);
+            } else if(type === 'weapon') {
+              this.farmingPlanner.setWeaponPriority(key, value);
+            }
+          } catch (error) {
+            console.error('Error updating priority:', error);
           }
         });
       });
-    });
+      
+      // Bulk priority buttons
+      const bulkButtons = document.querySelectorAll('.bulk-priority');
+      bulkButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          try {
+            const value = parseInt(e.target.dataset.value);
+            
+            // Update all sliders and priorities
+            const currentSliders = document.querySelectorAll('.priority-slider');
+            currentSliders.forEach(slider => {
+              slider.value = value;
+              const valueElement = slider.parentElement.querySelector('.priority-value');
+              if(valueElement) valueElement.textContent = value;
+              
+              const type = slider.dataset.type;
+              const key = slider.dataset.key;
+              
+              if(type === 'character') {
+                this.farmingPlanner.setCharacterPriority(key, value);
+              } else if(type === 'weapon') {
+                this.farmingPlanner.setWeaponPriority(key, value);
+              }
+            });
+          } catch (error) {
+            console.error('Error setting bulk priority:', error);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error setting up priority modal event listeners:', error);
+    }
     
     // Save button (just closes modal since changes are saved automatically)
-    const saveButton = document.querySelector('#savePriorities');
-    if(saveButton) {
-      saveButton.addEventListener('click', () => {
-        bootstrap.Modal.getInstance(this.elements.popup).hide();
-        this.render(true); // Re-render farming planner with new priorities
-      });
+    try {
+      const saveButton = document.querySelector('#savePriorities');
+      if(saveButton) {
+        saveButton.addEventListener('click', () => {
+          bootstrap.Modal.getInstance(this.elements.popup).hide();
+          this.render(true); // Re-render farming planner with new priorities
+        });
+      }
+    } catch (error) {
+      console.error('Error setting up save button:', error);
     }
   }
   

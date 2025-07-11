@@ -43,14 +43,14 @@
   --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-/* Enhanced Body and Layout */
+/* Enhanced Body and Layout - Simplified */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, var(--bs-body-bg) 0%, var(--bs-secondary-bg) 100%);
+  background: var(--bs-body-bg);
   min-height: 100vh;
-  position: relative;
 }
 
+/* Simplified background effect */
 body::before {
   content: '';
   position: fixed;
@@ -58,8 +58,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%);
+  background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.05) 0%, transparent 50%);
   pointer-events: none;
   z-index: -1;
 }
@@ -134,77 +133,57 @@ body::before {
   border-radius: 1px;
 }
 
-/* Enhanced Buttons */
+/* Enhanced Buttons - Simplified */
 .btn {
   border-radius: var(--border-radius-md);
   font-weight: 500;
   padding: 10px 20px;
-  transition: var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease;
   border: none;
 }
 
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s;
-}
-
-.btn:hover::before {
-  width: 300px;
-  height: 300px;
+.btn:hover {
+  transform: translateY(-1px);
 }
 
 .btn-primary {
   background: var(--primary-gradient);
   border: none;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .btn-success {
   background: var(--success-gradient);
   border: none;
-  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+  box-shadow: 0 2px 8px rgba(17, 153, 142, 0.2);
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
 }
 
 .btn-warning {
   background: var(--warning-gradient);
   border: none;
-  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+  box-shadow: 0 2px 8px rgba(240, 147, 251, 0.2);
 }
 
 .btn-warning:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
 }
 
 .btn-info {
   background: var(--info-gradient);
   border: none;
-  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.2);
 }
 
 .btn-info:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
 }
 
 #footer {
@@ -465,38 +444,20 @@ option:disabled {
   background-color: #ddd;
 }
 
-/* Enhanced Cards and Containers */
+/* Enhanced Cards and Containers - Simplified */
 .card {
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-elevated);
-  transition: var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--primary-gradient);
-  opacity: 0;
-  transition: var(--transition-smooth);
+  transition: all 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-floating);
   border-color: rgba(255, 255, 255, 0.2);
-}
-
-.card:hover::before {
-  opacity: 1;
 }
 
 .card-header {

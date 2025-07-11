@@ -410,9 +410,73 @@ export default class UIController {
   toJSON()
   {
     let result = {__class__: this.constructor.name};
-    for(let key of Object.keys(this))
-      if(["object","string","boolean","number","bigint"].indexOf(typeof(this[key])) > -1 && this.constructor.dontSerialize.indexOf(key) == -1)
-        result[key] = this[key];
+    let serializing = new Set();
+    
+    const serializeProperty = (obj, key) => {
+      const value = obj[key];
+      const valueType = typeof value;
+      
+      // Skip functions and undefined values
+      if (valueType === "function" || value === undefined) return undefined;
+      
+      // Handle primitive types
+      if (["string", "boolean", "number", "bigint"].includes(valueType)) {
+        return value;
+      }
+      
+      // Handle null
+      if (value === null) return null;
+      
+      // Handle arrays and objects - check for circular references
+      if (valueType === "object") {
+        // Prevent circular references
+        if (serializing.has(value)) {
+          return "[Circular Reference]";
+        }
+        
+        // Don't serialize complex objects that might cause issues
+        if (value.constructor && value.constructor.name && 
+            ['HTMLElement', 'Node', 'Element'].includes(value.constructor.name)) {
+          return "[DOM Element]";
+        }
+        
+        serializing.add(value);
+        try {
+          if (Array.isArray(value)) {
+            const result = value.map((item, index) => serializeProperty({[index]: item}, index)).filter(item => item !== undefined);
+            serializing.delete(value);
+            return result;
+          } else {
+            const result = {};
+            for (let subKey in value) {
+              if (value.hasOwnProperty(subKey)) {
+                const serialized = serializeProperty(value, subKey);
+                if (serialized !== undefined) {
+                  result[subKey] = serialized;
+                }
+              }
+            }
+            serializing.delete(value);
+            return result;
+          }
+        } catch (e) {
+          serializing.delete(value);
+          return "[Serialization Error]";
+        }
+      }
+      
+      return undefined;
+    };
+    
+    for(let key of Object.keys(this)) {
+      if(this.constructor.dontSerialize.indexOf(key) === -1) {
+        const serialized = serializeProperty(this, key);
+        if (serialized !== undefined) {
+          result[key] = serialized;
+        }
+      }
+    }
+    
     return result;
   }
 }

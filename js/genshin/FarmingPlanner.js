@@ -147,137 +147,197 @@ export default class FarmingPlanner extends UIController
   // Get prioritized farming recommendations
   getPrioritizedRecommendations()
   {
-    const recommendations = [];
-    const materials = this.viewer.lists.MaterialList.items();
-    const characters = this.viewer.lists.CharacterList.items();
-    const weapons = this.viewer.lists.WeaponList.items();
-    
-    // Get character priorities
-    const prioritizedCharacters = characters
-      .filter(char => char.wishlist && this.priorities.characters[char.key])
-      .sort((a, b) => (this.priorities.characters[b.key] || 0) - (this.priorities.characters[a.key] || 0));
-    
-    // Get weapon priorities  
-    const prioritizedWeapons = weapons
-      .filter(wpn => wpn.wishlist && this.priorities.weapons[wpn.key])
-      .sort((a, b) => (this.priorities.weapons[b.key] || 0) - (this.priorities.weapons[a.key] || 0));
-    
-    // Calculate needed materials for prioritized items
-    for(let character of prioritizedCharacters)
-    {
-      const planMaterials = character.getPlanMaterials();
-      for(let materialKey in planMaterials)
+    try {
+      const recommendations = [];
+      const materials = this.viewer.lists.MaterialList.items();
+      const characters = this.viewer.lists.CharacterList.items();
+      const weapons = this.viewer.lists.WeaponList.items();
+      
+      // Get character priorities with performance optimization
+      const prioritizedCharacters = characters
+        .filter(char => char.wishlist && this.priorities.characters[char.key])
+        .sort((a, b) => (this.priorities.characters[b.key] || 0) - (this.priorities.characters[a.key] || 0))
+        .slice(0, 20); // Limit to top 20 to prevent performance issues
+      
+      // Get weapon priorities with performance optimization
+      const prioritizedWeapons = weapons
+        .filter(wpn => wpn.wishlist && this.priorities.weapons[wpn.key])
+        .sort((a, b) => (this.priorities.weapons[b.key] || 0) - (this.priorities.weapons[a.key] || 0))
+        .slice(0, 20); // Limit to top 20 to prevent performance issues
+      
+      // Calculate needed materials for prioritized items
+      for(let character of prioritizedCharacters)
       {
-        const material = this.viewer.lists.MaterialList.get(materialKey);
-        if(material && planMaterials[materialKey] > 0)
-        {
-          recommendations.push({
-            type: 'character',
-            character: character,
-            material: material,
-            needed: planMaterials[materialKey],
-            priority: this.priorities.characters[character.key] || 0,
-            available: material.count || 0,
-            deficit: Math.max(0, planMaterials[materialKey] - (material.count || 0))
-          });
+        try {
+          const planMaterials = character.getPlanMaterials();
+          for(let materialKey in planMaterials)
+          {
+            const material = this.viewer.lists.MaterialList.get(materialKey);
+            if(material && planMaterials[materialKey] > 0)
+            {
+              recommendations.push({
+                type: 'character',
+                character: character,
+                material: material,
+                needed: planMaterials[materialKey],
+                priority: this.priorities.characters[character.key] || 0,
+                available: material.count || 0,
+                deficit: Math.max(0, planMaterials[materialKey] - (material.count || 0))
+              });
+            }
+          }
+        } catch (error) {
+          console.warn(`Error processing character ${character.key}:`, error);
         }
       }
-    }
-    
-    for(let weapon of prioritizedWeapons)
-    {
-      const planMaterials = weapon.getPlanMaterials();
-      for(let materialKey in planMaterials)
+      
+      for(let weapon of prioritizedWeapons)
       {
-        const material = this.viewer.lists.MaterialList.get(materialKey);
-        if(material && planMaterials[materialKey] > 0)
-        {
-          recommendations.push({
-            type: 'weapon',
-            weapon: weapon,
-            material: material,
-            needed: planMaterials[materialKey],
-            priority: this.priorities.weapons[weapon.key] || 0,
-            available: material.count || 0,
-            deficit: Math.max(0, planMaterials[materialKey] - (material.count || 0))
-          });
+        try {
+          const planMaterials = weapon.getPlanMaterials();
+          for(let materialKey in planMaterials)
+          {
+            const material = this.viewer.lists.MaterialList.get(materialKey);
+            if(material && planMaterials[materialKey] > 0)
+            {
+              recommendations.push({
+                type: 'weapon',
+                weapon: weapon,
+                material: material,
+                needed: planMaterials[materialKey],
+                priority: this.priorities.weapons[weapon.key] || 0,
+                available: material.count || 0,
+                deficit: Math.max(0, planMaterials[materialKey] - (material.count || 0))
+              });
+            }
+          }
+        } catch (error) {
+          console.warn(`Error processing weapon ${weapon.key}:`, error);
         }
       }
+      
+      // Sort by priority and deficit
+      recommendations.sort((a, b) => {
+        if(a.priority !== b.priority) return b.priority - a.priority;
+        return b.deficit - a.deficit;
+      });
+      
+      return recommendations.slice(0, 50); // Limit to top 50 recommendations
+    } catch (error) {
+      console.error('Error getting prioritized recommendations:', error);
+      return [];
     }
-    
-    // Sort by priority and deficit
-    recommendations.sort((a, b) => {
-      if(a.priority !== b.priority) return b.priority - a.priority;
-      return b.deficit - a.deficit;
-    });
-    
-    return recommendations;
   }
   
   // Set priority for a character (1-10 scale)
   setCharacterPriority(characterKey, priority)
   {
-    this.priorities.characters[characterKey] = Math.max(0, Math.min(10, priority));
-    this.viewer.queueStore();
+    try {
+      const normalizedPriority = Math.max(0, Math.min(10, parseInt(priority) || 0));
+      this.priorities.characters[characterKey] = normalizedPriority;
+      this.viewer.queueStore();
+      return true;
+    } catch (error) {
+      console.error(`Error setting character priority for ${characterKey}:`, error);
+      return false;
+    }
   }
   
   // Set priority for a weapon (1-10 scale)
   setWeaponPriority(weaponKey, priority)
   {
-    this.priorities.weapons[weaponKey] = Math.max(0, Math.min(10, priority));
-    this.viewer.queueStore();
+    try {
+      const normalizedPriority = Math.max(0, Math.min(10, parseInt(priority) || 0));
+      this.priorities.weapons[weaponKey] = normalizedPriority;
+      this.viewer.queueStore();
+      return true;
+    } catch (error) {
+      console.error(`Error setting weapon priority for ${weaponKey}:`, error);
+      return false;
+    }
   }
   
   // Set double event status
   setDoubleEvent(eventType, isActive)
   {
-    if(['character', 'talent', 'weapon', 'experience'].includes(eventType))
-    {
-      this.doubleEvents[eventType] = isActive;
-      this.viewer.queueStore();
+    try {
+      if(['character', 'talent', 'weapon', 'experience'].includes(eventType))
+      {
+        this.doubleEvents[eventType] = Boolean(isActive);
+        this.viewer.queueStore();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Error setting double event ${eventType}:`, error);
+      return false;
     }
   }
   
   // Quick increment material count
   incrementMaterial(materialKey, amount = 1)
   {
-    const material = this.viewer.lists.MaterialList.get(materialKey);
-    if(material) {
-      material.update("count", material.count + amount);
-      this.viewer.queueStore();
-    } else {
-      console.warn(`Material not found: ${materialKey}`);
+    try {
+      const material = this.viewer.lists.MaterialList.get(materialKey);
+      if(material) {
+        const currentCount = material.count || 0;
+        const newCount = Math.max(0, currentCount + amount);
+        material.update("count", newCount);
+        this.viewer.queueStore();
+        return true;
+      } else {
+        console.warn(`Material not found: ${materialKey}`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`Error incrementing material ${materialKey}:`, error);
+      return false;
     }
   }
   
   // Get farming summary for today
   getFarmingSummary()
   {
-    const farmable = this.getTodaysFarmableMaterials();
-    const recommendations = this.getPrioritizedRecommendations();
-    const today = this.viewer.today();
-    
-    // Filter recommendations to only show farmable today
-    const todaysRecommendations = recommendations.filter(rec => {
-      const material = rec.material;
+    try {
+      const farmable = this.getTodaysFarmableMaterials();
+      const recommendations = this.getPrioritizedRecommendations();
+      const today = this.viewer.today();
       
-      // Check if material is farmable today
-      if(material.days && material.days.includes(today)) return true;
+      // Filter recommendations to only show farmable today
+      const todaysRecommendations = recommendations.filter(rec => {
+        try {
+          const material = rec.material;
+          
+          // Check if material is farmable today
+          if(material.days && material.days.includes(today)) return true;
+          
+          // Check if it's available due to double events
+          if(this.doubleEvents.talent && material.shorthand && Object.keys(GenshinLootData.mastery).includes(material.shorthand)) return true;
+          if(this.doubleEvents.weapon && material.shorthand && Object.keys(GenshinLootData.forgery).includes(material.shorthand)) return true;
+          if(this.doubleEvents.character && (material.type === 'boss' || material.type === 'flora')) return true;
+          if(this.doubleEvents.experience && material.type === 'leyline') return true;
+          
+          return false;
+        } catch (error) {
+          console.warn('Error filtering recommendation:', error);
+          return false;
+        }
+      });
       
-      // Check if it's available due to double events
-      if(this.doubleEvents.talent && material.shorthand && Object.keys(GenshinLootData.mastery).includes(material.shorthand)) return true;
-      if(this.doubleEvents.weapon && material.shorthand && Object.keys(GenshinLootData.forgery).includes(material.shorthand)) return true;
-      if(this.doubleEvents.character && (material.type === 'boss' || material.type === 'flora')) return true;
-      if(this.doubleEvents.experience && material.type === 'leyline') return true;
-      
-      return false;
-    });
-    
-    return {
-      today: today,
-      farmable: farmable,
-      recommendations: todaysRecommendations.slice(0, 20), // Limit to top 20
-      doubleEvents: this.doubleEvents
-    };
+      return {
+        today: today,
+        farmable: farmable,
+        recommendations: todaysRecommendations.slice(0, 15), // Limit to top 15 for performance
+        doubleEvents: this.doubleEvents
+      };
+    } catch (error) {
+      console.error('Error getting farming summary:', error);
+      return {
+        today: 'Error',
+        farmable: { mastery: [], forgery: [], doubleEventMaterials: [] },
+        recommendations: [],
+        doubleEvents: this.doubleEvents || { character: false, talent: false, weapon: false, experience: false }
+      };
+    }
   }
 }
