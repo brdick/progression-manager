@@ -60,18 +60,8 @@ export default class GenshinManager extends DataManager
       try {
         console.log('Upgrading to full initialization...');
         
-        // Import essential components
-        const [
-          ListDisplayManager,
-          GenshinAccount,
-          MaterialList,
-          CharacterList, 
-          WeaponList,
-          ArtifactList,
-          TeamList,
-          FurnitureList,
-          FurnitureSetList
-        ] = await Promise.all([
+        // Import essential components with fallback handling
+        const loadResults = await Promise.allSettled([
           window.importer.get(`js/ListDisplayManager.js`).then(m => m.default),
           window.importer.get(`js/genshin/GenshinAccount.js`).then(m => m.default),
           window.importer.get(`js/genshin/MaterialList.js`).then(m => m.default),
@@ -83,24 +73,55 @@ export default class GenshinManager extends DataManager
           window.importer.get(`js/genshin/FurnitureSetList.js`).then(m => m.default)
         ]);
         
-        // Register lists
-        this.registerList(MaterialList);
-        this.registerList(CharacterList);
-        this.registerList(WeaponList);
-        this.registerList(ArtifactList);
-        this.registerList(TeamList);
-        this.registerList(FurnitureList);
-        this.registerList(FurnitureSetList);
+        // Extract successful loads and track failures
+        const componentNames = ['ListDisplayManager', 'GenshinAccount', 'MaterialList', 'CharacterList', 
+                               'WeaponList', 'ArtifactList', 'TeamList', 'FurnitureList', 'FurnitureSetList'];
+        const failedComponents = [];
+        const [
+          ListDisplayManager, GenshinAccount, MaterialList, CharacterList, 
+          WeaponList, ArtifactList, TeamList, FurnitureList, FurnitureSetList
+        ] = loadResults.map((result, index) => {
+          if (result.status === 'rejected') {
+            failedComponents.push(componentNames[index]);
+            console.error(`Failed to load ${componentNames[index]}:`, result.reason);
+            return null;
+          }
+          return result.value;
+        });
         
-        // Register navigation items
+        // Store critical classes globally for access from other methods
+        if (GenshinAccount) {
+          window.GenshinAccount = GenshinAccount;
+        } else {
+          throw new Error('Critical class GenshinAccount failed to load - server may be down');
+        }
+        
+        // Register lists (only those that loaded successfully)
+        if (MaterialList) this.registerList(MaterialList);
+        if (CharacterList) this.registerList(CharacterList);
+        if (WeaponList) this.registerList(WeaponList);
+        if (ArtifactList) this.registerList(ArtifactList);
+        if (TeamList) this.registerList(TeamList);
+        if (FurnitureList) this.registerList(FurnitureList);
+        if (FurnitureSetList) this.registerList(FurnitureSetList);
+        
+        // Register navigation items (only for successfully loaded lists)
         this.registerNavItem("Daily Farming", "farming", {self:true});
-        this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
-        this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
-        this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
-        this.registerNavItem("Teams", "teams", {listName:"TeamList"});
-        this.registerNavItem("Materials", "materials", {listName:"MaterialList"});
-        this.registerNavItem("Furniture Sets", "furnitureSets", {listName:"FurnitureSetList"});
-        this.registerNavItem("Furniture", "furniture", {listName:"FurnitureList"});
+        if (CharacterList) this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
+        if (WeaponList) this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
+        if (ArtifactList) this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
+        if (TeamList) this.registerNavItem("Teams", "teams", {listName:"TeamList"});
+        if (MaterialList) this.registerNavItem("Materials", "materials", {listName:"MaterialList"});
+        if (FurnitureSetList) this.registerNavItem("Furniture Sets", "furnitureSets", {listName:"FurnitureSetList"});
+        if (FurnitureList) this.registerNavItem("Furniture", "furniture", {listName:"FurnitureList"});
+        
+        // Report any failures to user
+        if (failedComponents.length > 0) {
+          console.warn(`Some components failed to load: ${failedComponents.join(', ')}. Those features will be unavailable.`);
+          if (window.serverStatus) {
+            window.serverStatus.showStatus(true, `Some features unavailable: ${failedComponents.join(', ')}`);
+          }
+        }
         
         this.minimalMode = false;
         this.initialized = true;
@@ -277,11 +298,12 @@ export default class GenshinManager extends DataManager
   
   createAccount(id)
   {
-    if (typeof GenshinAccount === 'undefined') {
+    const GenshinAccountClass = window.GenshinAccount;
+    if (typeof GenshinAccountClass === 'undefined') {
       console.error('GenshinAccount class not loaded, cannot create account');
       throw new Error('Required game classes not loaded. Please refresh the page.');
     }
-    return new GenshinAccount(id, {viewer:this});
+    return new GenshinAccountClass(id, {viewer:this});
   }
   
   activateAccount(account, server)

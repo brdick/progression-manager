@@ -377,13 +377,38 @@ async function loadPage()
   let toClick = 0;
   let navLinks = document.querySelectorAll(".pane-select");
   
-  // Safety check for navigation elements
+  // Safety check for navigation elements with retry limit
   if (navLinks.length === 0) {
-    console.warn('No navigation links found, waiting for page initialization...');
-    // Retry after a short delay
-    setTimeout(() => loadPage(), 500);
+    if (!loadPage.retryCount) loadPage.retryCount = 0;
+    loadPage.retryCount++;
+    
+    if (loadPage.retryCount > 10) {
+      console.error('Navigation links never appeared after multiple retries. App initialization failed.');
+      
+      // Show user-friendly error
+      const content = document.getElementById('content');
+      if (content) {
+        content.innerHTML = `
+          <div class="container mt-5">
+            <div class="alert alert-warning">
+              <h4>App Initialization Issues</h4>
+              <p>The application is having trouble loading due to server issues.</p>
+              <p>Some features may not be available. Try refreshing the page.</p>
+              <button class="btn btn-primary" onclick="location.reload()">Refresh Page</button>
+            </div>
+          </div>
+        `;
+      }
+      return;
+    }
+    
+    console.warn(`No navigation links found, waiting for page initialization... (attempt ${loadPage.retryCount})`);
+    setTimeout(() => loadPage(), 1000);
     return;
   }
+  
+  // Reset retry counter on success
+  loadPage.retryCount = 0;
   
   for(let i=0; i<navLinks.length; i++)
   {
