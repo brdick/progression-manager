@@ -101,37 +101,45 @@ handlebars.registerHelper('lookup', function(...params) {
   return obj;
 });
 handlebars.registerHelper('math', function(...params) {
-  let options = params.pop();
-  let method = params.shift();
-  let operations = ["+","-","*","/","%"];
-  params = params.map(term => typeof(Math[term]) == "number" ? Math[term] : operations.indexOf(term) > -1 ? term : parseFloat(term));
-  if(typeof(Math[method]) == "function")
-    return (Math[method])(...params);
-  else
-  {
-    params.unshift(method);
-    let total = params.reduce((result,term) => {
-      if(typeof(term) == "number")
-      {
-        if(result.operation == "+")
-          result.total = result.total + term;
-        else if(result.operation == "-")
-          result.total = result.total - term;
-        else if(result.operation == "*")
-          result.total = result.total * term;
-        else if(result.operation == "/")
-          result.total = result.total / term;
-        else if(result.operation == "%")
-          result.total = result.total % term;
-        else
-          result.total = term;
-      }
-      else
-        result.operation = term;
-      return result;
-    }, {operation:null, total:NaN}).total;
-    return total;
-  }
+  let context = params.pop();
+  let [operation, ...values] = params;
+  
+  if(operation == "add")
+    return values.reduce((acc, val) => acc + val, 0);
+  else if(operation == "sub")
+    return values.reduce((acc, val) => acc - val);
+  else if(operation == "mul")
+    return values.reduce((acc, val) => acc * val, 1);
+  else if(operation == "div")
+    return values.reduce((acc, val) => acc / val);
+  else if(operation == "mod")
+    return values.reduce((acc, val) => acc % val);
+  else if(operation == "round")
+    return Math.round(values[0]);
+  else if(operation == "floor")
+    return Math.floor(values[0]);
+  else if(operation == "ceil")
+    return Math.ceil(values[0]);
+  
+  return 0;
+});
+
+// Helper for farming planner
+handlebars.registerHelper('add', function(a, b) {
+  return (a || 0) + (b || 0);
+});
+
+handlebars.registerHelper('gt', function(a, b) {
+  return (a || 0) > (b || 0);
+});
+
+handlebars.registerHelper('some', function(array, property) {
+  if(!Array.isArray(array)) return false;
+  return array.some(item => item && item[property]);
+});
+
+handlebars.registerHelper('getProperty', function(obj, property) {
+  return obj ? obj[property] : undefined;
 });
 
 class Renderer

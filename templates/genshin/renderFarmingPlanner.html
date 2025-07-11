@@ -1,0 +1,280 @@
+<div class="farming-planner" data-template="genshin/renderFarmingPlanner" data-uuid="{{uuid item}}">
+  
+  <!-- Header Section -->
+  <div class="container-fluid mb-4">
+    <div class="row">
+      <div class="col-12">
+        <h2><i class="fa-solid fa-calendar-day"></i> Daily Farming Planner - {{summary.today}}</h2>
+        <p class="text-muted">Plan your resin usage efficiently based on your priorities and today's available domains.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Double Event Controls -->
+  <div class="container-fluid mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fa-solid fa-gift"></i> Double Drop Events</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input double-event-toggle" type="checkbox" id="eventCharacter" data-event="character" {{#if summary.doubleEvents.character}}checked{{/if}}>
+              <label class="form-check-label" for="eventCharacter">
+                <strong>Character Materials</strong><br>
+                <small class="text-muted">Boss materials, local specialties</small>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input double-event-toggle" type="checkbox" id="eventTalent" data-event="talent" {{#if summary.doubleEvents.talent}}checked{{/if}}>
+              <label class="form-check-label" for="eventTalent">
+                <strong>Talent Materials</strong><br>
+                <small class="text-muted">All talent books available</small>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input double-event-toggle" type="checkbox" id="eventWeapon" data-event="weapon" {{#if summary.doubleEvents.weapon}}checked{{/if}}>
+              <label class="form-check-label" for="eventWeapon">
+                <strong>Weapon Materials</strong><br>
+                <small class="text-muted">All weapon ascension materials</small>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input double-event-toggle" type="checkbox" id="eventExperience" data-event="experience" {{#if summary.doubleEvents.experience}}checked{{/if}}>
+              <label class="form-check-label" for="eventExperience">
+                <strong>EXP Materials</strong><br>
+                <small class="text-muted">Ley Lines (Mora, EXP books)</small>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Farmable Materials -->
+  <div class="container-fluid mb-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fa-solid fa-map-marker-alt"></i> Available Domains Today</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- Talent Materials -->
+          <div class="col-md-6">
+            <h6><i class="fa-solid fa-book"></i> Talent Materials</h6>
+            {{#if summary.farmable.mastery.length}}
+              {{#each summary.farmable.mastery}}
+                <div class="domain-item mb-2 p-2 {{#if eventBonus}}border border-warning bg-warning bg-opacity-10{{else}}border{{/if}}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>{{name}}</strong>
+                      {{#if eventBonus}}<span class="badge bg-warning text-dark ms-2">Event Bonus!</span>{{/if}}
+                      <br>
+                      <small class="text-muted">{{source}}</small>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            {{else}}
+              <p class="text-muted">No talent materials available today.</p>
+            {{/if}}
+          </div>
+          
+          <!-- Weapon Materials -->
+          <div class="col-md-6">
+            <h6><i class="fa-solid fa-sword"></i> Weapon Materials</h6>
+            {{#if summary.farmable.forgery.length}}
+              {{#each summary.farmable.forgery}}
+                <div class="domain-item mb-2 p-2 {{#if eventBonus}}border border-warning bg-warning bg-opacity-10{{else}}border{{/if}}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>{{name}}</strong>
+                      {{#if eventBonus}}<span class="badge bg-warning text-dark ms-2">Event Bonus!</span>{{/if}}
+                      <br>
+                      <small class="text-muted">{{source}}</small>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            {{else}}
+              <p class="text-muted">No weapon materials available today.</p>
+            {{/if}}
+          </div>
+        </div>
+        
+        <!-- Double Event Materials -->
+        {{#if summary.farmable.doubleEventMaterials.length}}
+          <div class="row mt-3">
+            <div class="col-12">
+              <h6><i class="fa-solid fa-star"></i> Special Event Materials</h6>
+              {{#each summary.farmable.doubleEventMaterials}}
+                <div class="alert alert-warning d-flex align-items-center">
+                  <i class="fa-solid fa-gift me-2"></i>
+                  <strong>{{type}} Event:</strong> {{description}}
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Priority Recommendations -->
+  <div class="container-fluid mb-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fa-solid fa-star"></i> Priority Farming Recommendations</h5>
+        <button class="btn btn-outline-primary btn-sm" id="setPrioritiesBtn">
+          <i class="fa-solid fa-gear"></i> Set Priorities
+        </button>
+      </div>
+      <div class="card-body">
+        {{#if summary.recommendations.length}}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Item</th>
+                  <th>Material</th>
+                  <th>Need</th>
+                  <th>Have</th>
+                  <th>Missing</th>
+                  <th>Quick Add</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each summary.recommendations}}
+                  <tr class="priority-{{priority}}">
+                    <td>
+                      <span class="badge bg-{{#if (gt priority 7)}}danger{{else if (gt priority 4)}}warning{{else}}secondary{{/if}}">
+                        {{priority}}/10
+                      </span>
+                    </td>
+                    <td>
+                      {{#if character}}
+                        <div class="d-flex align-items-center">
+                          <img src="{{character.image}}" alt="{{character.name}}" class="item-icon-sm me-2">
+                          {{character.name}}
+                        </div>
+                      {{/if}}
+                      {{#if weapon}}
+                        <div class="d-flex align-items-center">
+                          <img src="{{weapon.image}}" alt="{{weapon.name}}" class="item-icon-sm me-2">
+                          {{weapon.name}}
+                        </div>
+                      {{/if}}
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <img src="{{material.image}}" alt="{{material.name}}" class="material-icon-sm me-2">
+                        {{material.name}}
+                      </div>
+                    </td>
+                    <td><span class="fw-bold">{{needed}}</span></td>
+                    <td>{{available}}</td>
+                    <td>
+                      {{#if deficit}}
+                        <span class="text-danger fw-bold">{{deficit}}</span>
+                      {{else}}
+                        <span class="text-success">✓</span>
+                      {{/if}}
+                    </td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <button class="btn btn-outline-success btn-sm quick-add" data-material="{{material.key}}" data-amount="1">+1</button>
+                        <button class="btn btn-outline-success btn-sm quick-add" data-material="{{material.key}}" data-amount="5">+5</button>
+                        <button class="btn btn-outline-success btn-sm quick-add" data-material="{{material.key}}" data-amount="10">+10</button>
+                      </div>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="text-center py-4">
+            <i class="fa-solid fa-check-circle text-success fa-3x mb-3"></i>
+            <h5>All Set!</h5>
+            <p class="text-muted">No high-priority materials need to be farmed today, or you haven't set any priorities yet.</p>
+            <button class="btn btn-primary" id="setPrioritiesBtn2">
+              <i class="fa-solid fa-gear"></i> Set Character & Weapon Priorities
+            </button>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Quick Stats -->
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Farmable Domains</h5>
+            <h2 class="text-primary">{{add summary.farmable.mastery.length summary.farmable.forgery.length}}</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Priority Items</h5>
+            <h2 class="text-warning">{{summary.recommendations.length}}</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Active Events</h5>
+            <h2 class="text-success">{{summary.farmable.doubleEventMaterials.length}}</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.item-icon-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.material-icon-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.domain-item {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.domain-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.priority-10 { background-color: rgba(220, 53, 69, 0.1); }
+.priority-9 { background-color: rgba(220, 53, 69, 0.08); }
+.priority-8 { background-color: rgba(255, 193, 7, 0.1); }
+.priority-7 { background-color: rgba(255, 193, 7, 0.08); }
+
+.quick-add:hover {
+  transform: scale(1.05);
+}
+</style>

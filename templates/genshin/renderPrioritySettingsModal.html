@@ -1,0 +1,158 @@
+<div class="modal-content" data-template="genshin/renderPrioritySettingsModal">
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <i class="fa-solid fa-star"></i> Set Farming Priorities
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <p class="text-muted">Set priorities for your characters and weapons to get personalized farming recommendations. Priority scale: 1 (low) to 10 (highest).</p>
+    
+    <!-- Character Priorities -->
+    <div class="mb-4">
+      <h6><i class="fa-solid fa-users"></i> Character Priorities</h6>
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Character</th>
+              <th>Current Level</th>
+              <th>Wishlist Level</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each characters}}
+              {{#if wishlist}}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="{{image}}" alt="{{name}}" class="item-icon-sm me-2">
+                      {{name}}
+                    </div>
+                  </td>
+                  <td>{{level}}/{{ascension}}</td>
+                  <td>{{wishlist.level}}/{{wishlist.ascension}}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <input type="range" class="form-range me-2 priority-slider" 
+                             min="0" max="10" step="1" 
+                             value="{{lookup ../priorities.characters key}}"
+                             data-type="character" data-key="{{key}}"
+                             style="width: 100px;">
+                      <span class="priority-value badge bg-primary">{{lookup ../priorities.characters key}}</span>
+                    </div>
+                  </td>
+                </tr>
+              {{/if}}
+            {{/each}}
+          </tbody>
+        </table>
+        {{#unless (some characters 'wishlist')}}
+          <div class="text-center py-3">
+            <p class="text-muted">No characters have wishlist goals set. Set desired levels in character details to enable priority setting.</p>
+          </div>
+        {{/unless}}
+      </div>
+    </div>
+    
+    <!-- Weapon Priorities -->
+    <div class="mb-4">
+      <h6><i class="fa-solid fa-sword"></i> Weapon Priorities</h6>
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Weapon</th>
+              <th>Current Level</th>
+              <th>Wishlist Level</th>
+              <th>Equipped By</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each weapons}}
+              {{#if wishlist}}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="{{image}}" alt="{{name}}" class="item-icon-sm me-2">
+                      {{name}}
+                    </div>
+                  </td>
+                  <td>{{level}}/{{ascension}}</td>
+                  <td>{{wishlist.level}}/{{wishlist.ascension}}</td>
+                  <td>
+                    {{#if character}}
+                      {{character.name}}
+                    {{else}}
+                      <span class="text-muted">Unequipped</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <input type="range" class="form-range me-2 priority-slider" 
+                             min="0" max="10" step="1" 
+                             value="{{lookup ../priorities.weapons key}}"
+                             data-type="weapon" data-key="{{key}}"
+                             style="width: 100px;">
+                      <span class="priority-value badge bg-primary">{{lookup ../priorities.weapons key}}</span>
+                    </div>
+                  </td>
+                </tr>
+              {{/if}}
+            {{/each}}
+          </tbody>
+        </table>
+        {{#unless (some weapons 'wishlist')}}
+          <div class="text-center py-3">
+            <p class="text-muted">No weapons have wishlist goals set. Set desired levels in weapon details to enable priority setting.</p>
+          </div>
+        {{/unless}}
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Quick Actions</h6>
+        <div class="btn-group-vertical w-100" role="group">
+          <button type="button" class="btn btn-outline-secondary btn-sm bulk-priority" data-value="0">Clear All Priorities</button>
+          <button type="button" class="btn btn-outline-warning btn-sm bulk-priority" data-value="5">Set All to Medium (5)</button>
+          <button type="button" class="btn btn-outline-danger btn-sm bulk-priority" data-value="10">Set All to High (10)</button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h6>Priority Guidelines</h6>
+        <small class="text-muted">
+          <strong>10:</strong> Urgent - Daily farming focus<br>
+          <strong>7-9:</strong> High - Farm when available<br>
+          <strong>4-6:</strong> Medium - Farm when other priorities done<br>
+          <strong>1-3:</strong> Low - Farm during downtimes<br>
+          <strong>0:</strong> No priority - Ignore for now
+        </small>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-primary" id="savePriorities">Save Priorities</button>
+  </div>
+</div>
+
+<style>
+.item-icon-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.priority-slider {
+  cursor: pointer;
+}
+
+.priority-value {
+  min-width: 35px;
+  text-align: center;
+}
+</style>

@@ -262,6 +262,34 @@ async function addEventListeners()
     saveTemplateAsFile("GenshinData.json", window.viewer);
   });
 
+  // Farming planner button
+  document.addEventListener("click", event => {
+    if(event.target.closest('.farming-planner-btn')) {
+      // Find the farming navigation link and trigger it
+      const farmingNavLink = document.querySelector('.pane-select[href="#farming"]');
+      if(farmingNavLink) {
+        farmingNavLink.click();
+      } else {
+        // Fallback: directly trigger the view
+        window.location.hash = '#farming';
+        window.viewer.view({hash: '#farming'});
+      }
+    }
+  });
+  
+  // Handle hash changes for farming planner
+  window.addEventListener('hashchange', () => {
+    if(location.hash === '#farming') {
+      // Make sure the farming navigation link is active
+      const farmingNavLink = document.querySelector('.pane-select[href="#farming"]');
+      if(farmingNavLink) {
+        document.querySelectorAll('.pane-select').forEach(link => link.classList.remove('active'));
+        farmingNavLink.classList.add('active');
+        window.viewer.view({hash: '#farming'});
+      }
+    }
+  });
+  
   document.getElementById("savePastebinBtn")?.addEventListener("click", async event => {
     event.target.disabled = true;
     setTimeout(() => event.target.disabled = false, 60000);

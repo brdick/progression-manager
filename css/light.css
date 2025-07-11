@@ -1,23 +1,41 @@
 :root {
-  --bs-body-color: #212529;
-  --bs-body-color-rgb: 33,37,41;
-  --bs-body-bg: #fff;
-  --bs-body-bg-rgb: 255,255,255;
-  --bs-emphasis-color: #000;
-  --bs-emphasis-color-rgb: 0,0,0;
-  --bs-secondary-color: rgba(33, 37, 41, 0.75);
-  --bs-secondary-color-rgb: 33,37,41;
-  --bs-secondary-bg: #e9ecef;
-  --bs-secondary-bg-rgb: 233,236,239;
-  --bs-tertiary-color: rgba(33, 37, 41, 0.5);
-  --bs-tertiary-color-rgb: 33,37,41;
-  --bs-tertiary-bg: #f8f9fa;
-  --bs-tertiary-bg-rgb: 248,249,250;
-  --bs-border-color: #dee2e6;
-  --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
+  --bs-body-color: #2d3748;
+  --bs-body-color-rgb: 45,55,72;
+  --bs-body-bg: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  --bs-body-bg-rgb: 247,250,252;
+  --bs-emphasis-color: #1a202c;
+  --bs-emphasis-color-rgb: 26,32,44;
+  --bs-secondary-color: rgba(45, 55, 72, 0.75);
+  --bs-secondary-color-rgb: 45,55,72;
+  --bs-secondary-bg: rgba(237, 242, 247, 0.8);
+  --bs-secondary-bg-rgb: 237,242,247;
+  --bs-tertiary-color: rgba(45, 55, 72, 0.5);
+  --bs-tertiary-color-rgb: 45,55,72;
+  --bs-tertiary-bg: rgba(255, 255, 255, 0.9);
+  --bs-tertiary-bg-rgb: 255,255,255;
+  --bs-border-color: rgba(203, 213, 224, 0.8);
+  --bs-border-color-translucent: rgba(0, 0, 0, 0.1);
   
-  --footer-bg: rgb(var(--bs-light-rgb));
-  --button-border-rgb: 255,255,255;
-  --item-shadow-color: black;
+  --footer-bg: rgba(247, 250, 252, 0.95);
+  --button-border-rgb: 203,213,224;
+  --item-shadow-color: rgba(0, 0, 0, 0.1);
   --image-icon-filter: invert(0);
+
+  /* Enhanced light theme gradients */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --dark-gradient: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  
+  /* Light theme specific colors */
+  --accent-gold: #d69e2e;
+  --accent-purple: #805ad5;
+  --accent-blue: #3182ce;
+  
+  /* Enhanced shadows for light theme */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --glow-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
 }

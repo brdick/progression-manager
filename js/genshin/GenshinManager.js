@@ -24,6 +24,8 @@ const {default:FurnitureList} = await window.importer.get(`js/genshin/FurnitureL
 console.debug(`Imported FurnitureList.`);
 const {default:FurnitureSetList} = await window.importer.get(`js/genshin/FurnitureSetList.js`);
 console.debug(`Imported FurnitureSetList.`);
+const {default:FarmingPlanner} = await window.importer.get(`js/genshin/FarmingPlanner.js`);
+console.debug(`Imported FarmingPlanner.`);
 
 export default class GenshinManager extends DataManager
 {
@@ -45,6 +47,9 @@ export default class GenshinManager extends DataManager
     this.elements['loadModal'] = document.getElementById("loadModal");
     this.elements['loadError'] = document.getElementById("loadError");
     
+    // Initialize farming planner
+    this.farmingPlanner = new FarmingPlanner(this);
+    
     this.registerList(MaterialList);
     this.registerList(CharacterList);
     this.registerList(WeaponList);
@@ -53,6 +58,7 @@ export default class GenshinManager extends DataManager
     this.registerList(FurnitureList);
     this.registerList(FurnitureSetList);
     
+    this.registerNavItem("Daily Farming", "farming", {self:true});
     this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
     this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
     this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
@@ -273,6 +279,16 @@ export default class GenshinManager extends DataManager
       return hasData;
     }
     
+    // Load farming planner data
+    if(data.farmingPlanner)
+    {
+      hasData = true;
+      if(data.farmingPlanner.priorities)
+        this.farmingPlanner.priorities = data.farmingPlanner.priorities;
+      if(data.farmingPlanner.doubleEvents)
+        this.farmingPlanner.doubleEvents = data.farmingPlanner.doubleEvents;
+    }
+    
     // Load character build preferences.
     if(data.buildData)
     {
@@ -299,6 +315,144 @@ export default class GenshinManager extends DataManager
     this.today();
     
     return super.fromJSON(data, {merge}) || hasData;
+  }
+  
+  async render(force=false)
+  {
+    // Handle farming planner rendering
+    if(this.currentView === this.constructor.name)
+    {
+      const summary = this.farmingPlanner.getFarmingSummary();
+      let render = await Renderer.rerender(
+        this.elements[this.constructor.name].querySelector(`[data-uuid="${this.farmingPlanner.uuid}"]`),
+        { item: this.farmingPlanner, summary: summary },
+        {
+          template: this.farmingPlanner.constructor.templateName,
+          parentElement: this.elements[this.constructor.name],
+        }
+      );
+      
+      // Add event listeners for the farming planner
+      this.addFarmingPlannerEventListeners();
+      
+      let footer = document.getElementById("footer");
+      footer.classList.add("d-none");
+      
+      return {render, footer};
+    }
+    
+    return super.render(force);
+  }
+  
+  addFarmingPlannerEventListeners()
+  {
+    // Double event toggles
+    const doubleEventToggles = document.querySelectorAll('.double-event-toggle');
+    doubleEventToggles.forEach(toggle => {
+      toggle.addEventListener('change', (e) => {
+        const eventType = e.target.dataset.event;
+        this.farmingPlanner.setDoubleEvent(eventType, e.target.checked);
+        this.render(true); // Re-render to update the display
+      });
+    });
+    
+    // Quick add buttons
+    const quickAddButtons = document.querySelectorAll('.quick-add');
+    quickAddButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const materialKey = e.target.dataset.material;
+        const amount = parseInt(e.target.dataset.amount);
+        this.farmingPlanner.incrementMaterial(materialKey, amount);
+        this.render(true); // Re-render to update counts
+      });
+    });
+    
+    // Priority settings buttons
+    const setPriorityButtons = document.querySelectorAll('#setPrioritiesBtn, #setPrioritiesBtn2');
+    setPriorityButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        this.showPrioritySettingsModal();
+      });
+    });
+  }
+  
+  async showPrioritySettingsModal()
+  {
+    const characters = this.lists.CharacterList.items();
+    const weapons = this.lists.WeaponList.items();
+    
+    await Renderer.rerender(
+      this.elements.popup.querySelector(".modal-content"),
+      { 
+        characters: characters,
+        weapons: weapons,
+        priorities: this.farmingPlanner.priorities
+      },
+      {
+        template: "genshin/renderPrioritySettingsModal",
+        showPopup: true
+      }
+    );
+    
+    // Add event listeners for the modal
+    this.addPriorityModalEventListeners();
+  }
+  
+  addPriorityModalEventListeners()
+  {
+    // Priority sliders
+    const prioritySliders = document.querySelectorAll('.priority-slider');
+    prioritySliders.forEach(slider => {
+      slider.addEventListener('input', (e) => {
+        const type = e.target.dataset.type;
+        const key = e.target.dataset.key;
+        const value = parseInt(e.target.value);
+        
+        // Update the display value
+        const valueElement = e.target.parentElement.querySelector('.priority-value');
+        if(valueElement) valueElement.textContent = value;
+        
+        // Update the priority
+        if(type === 'character') {
+          this.farmingPlanner.setCharacterPriority(key, value);
+        } else if(type === 'weapon') {
+          this.farmingPlanner.setWeaponPriority(key, value);
+        }
+      });
+    });
+    
+    // Bulk priority buttons
+    const bulkButtons = document.querySelectorAll('.bulk-priority');
+    bulkButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const value = parseInt(e.target.dataset.value);
+        
+        // Update all sliders and priorities
+        prioritySliders.forEach(slider => {
+          slider.value = value;
+          const valueElement = slider.parentElement.querySelector('.priority-value');
+          if(valueElement) valueElement.textContent = value;
+          
+          const type = slider.dataset.type;
+          const key = slider.dataset.key;
+          
+          if(type === 'character') {
+            this.farmingPlanner.setCharacterPriority(key, value);
+          } else if(type === 'weapon') {
+            this.farmingPlanner.setWeaponPriority(key, value);
+          }
+        });
+      });
+    });
+    
+    // Save button (just closes modal since changes are saved automatically)
+    const saveButton = document.querySelector('#savePriorities');
+    if(saveButton) {
+      saveButton.addEventListener('click', () => {
+        bootstrap.Modal.getInstance(this.elements.popup).hide();
+        this.render(true); // Re-render farming planner with new priorities
+      });
+    }
   }
   
   store()
