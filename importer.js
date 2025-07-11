@@ -35,7 +35,10 @@ class Importer {
       });
     }
     return result.catch(err => {
-      console.warn(`Couldn't get version of file: ${normalFile}:`, err);
+      // Only log warning for files that should exist, suppress for conditional/optional files
+      if (!normalFile.includes('gamedata/') && !normalFile.includes('FurnitureSet') && !normalFile.includes('Furniture')) {
+        console.warn(`Couldn't get version of file: ${normalFile}:`, err.message || err);
+      }
       return 'ERROR_' + this.timestamp;
     });
   }

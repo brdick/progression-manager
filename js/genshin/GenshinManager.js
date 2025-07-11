@@ -1,31 +1,11 @@
 import { DateTime } from 'https://cdn.jsdelivr.net/npm/luxon@3.3.0/+esm';
+
+// Essential imports only
 const { Renderer } = await window.importer.get(`js/Renderer.js`);
-
-//import GenshinBuilds from "./gamedata/GenshinBuilds.js";
-console.debug(`Importing other files.`);
-
 const {default:DataManager} = await window.importer.get(`js/DataManager.js`);
-console.debug(`Imported DataManager.`);
-const {default:ListDisplayManager} = await window.importer.get(`js/ListDisplayManager.js`);
-console.debug(`Imported ListDisplayManager.`);
-const {default:GenshinAccount} = await window.importer.get(`js/genshin/GenshinAccount.js`);
-console.debug(`Imported GenshinAccount.`);
-const {default:MaterialList} = await window.importer.get(`js/genshin/MaterialList.js`);
-console.debug(`Imported MaterialList.`);
-const {default:CharacterList} = await window.importer.get(`js/genshin/CharacterList.js`);
-console.debug(`Imported CharacterList.`);
-const {default:WeaponList} = await window.importer.get(`js/genshin/WeaponList.js`);
-console.debug(`Imported WeaponList.`);
-const {default:ArtifactList} = await window.importer.get(`js/genshin/ArtifactList.js`);
-console.debug(`Imported ArtifactList.`);
-const {default:TeamList} = await window.importer.get(`js/genshin/TeamList.js`);
-console.debug(`Imported TeamList.`);
-const {default:FurnitureList} = await window.importer.get(`js/genshin/FurnitureList.js`);
-console.debug(`Imported FurnitureList.`);
-const {default:FurnitureSetList} = await window.importer.get(`js/genshin/FurnitureSetList.js`);
-console.debug(`Imported FurnitureSetList.`);
 const {default:FarmingPlanner} = await window.importer.get(`js/genshin/FarmingPlanner.js`);
-console.debug(`Imported FarmingPlanner.`);
+
+console.debug(`Essential imports loaded.`);
 
 export default class GenshinManager extends DataManager
 {
@@ -46,26 +26,86 @@ export default class GenshinManager extends DataManager
     super();
     this.elements['loadModal'] = document.getElementById("loadModal");
     this.elements['loadError'] = document.getElementById("loadError");
+    this.initialized = false;
+    this.minimalMode = false;
+  }
+  
+  async initMinimal()
+  {
+    console.log('Initializing minimal GenshinManager (no data)');
+    this.minimalMode = true;
     
-    // Initialize farming planner
+    // Basic setup without loading heavy components
+    this.elements['header'] = document.getElementById("viewerHeader");
+    this.elements['main'] = document.getElementById("viewerMain");
+    this.elements['popup'] = document.getElementById("viewerPopup");
+    this.elements['nav'] = document.querySelector("#viewerHeader nav");
+    
+    // Initialize farming planner only (lightweight)
     this.farmingPlanner = new FarmingPlanner(this);
     
-    this.registerList(MaterialList);
-    this.registerList(CharacterList);
-    this.registerList(WeaponList);
-    this.registerList(ArtifactList);
-    this.registerList(TeamList);
-    this.registerList(FurnitureList);
-    this.registerList(FurnitureSetList);
+    // Setup basic navigation
+    this.renderNav();
     
-    this.registerNavItem("Daily Farming", "farming", {self:true});
-    this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
-    this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
-    this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
-    this.registerNavItem("Teams", "teams", {listName:"TeamList"});
-    this.registerNavItem("Materials", "materials", {listName:"MaterialList"});
-    this.registerNavItem("Furniture Sets", "furnitureSets", {listName:"FurnitureSetList"});
-    this.registerNavItem("Furniture", "furniture", {listName:"FurnitureList"});
+    // Render empty state
+    await this.renderEmptyState();
+    
+    this.initialized = true;
+    console.log('Minimal GenshinManager initialized successfully');
+  }
+  
+  async ensureFullInitialization()
+  {
+    if (!this.initialized || this.minimalMode) {
+      console.log('Upgrading to full initialization...');
+      
+      // Import essential components
+      const [
+        ListDisplayManager,
+        GenshinAccount,
+        MaterialList,
+        CharacterList, 
+        WeaponList,
+        ArtifactList,
+        TeamList,
+        FurnitureList,
+        FurnitureSetList
+      ] = await Promise.all([
+        window.importer.get(`js/ListDisplayManager.js`).then(m => m.default),
+        window.importer.get(`js/genshin/GenshinAccount.js`).then(m => m.default),
+        window.importer.get(`js/genshin/MaterialList.js`).then(m => m.default),
+        window.importer.get(`js/genshin/CharacterList.js`).then(m => m.default),
+        window.importer.get(`js/genshin/WeaponList.js`).then(m => m.default),
+        window.importer.get(`js/genshin/ArtifactList.js`).then(m => m.default),
+        window.importer.get(`js/genshin/TeamList.js`).then(m => m.default),
+        window.importer.get(`js/genshin/FurnitureList.js`).then(m => m.default),
+        window.importer.get(`js/genshin/FurnitureSetList.js`).then(m => m.default)
+      ]);
+      
+      // Register lists
+      this.registerList(MaterialList);
+      this.registerList(CharacterList);
+      this.registerList(WeaponList);
+      this.registerList(ArtifactList);
+      this.registerList(TeamList);
+      this.registerList(FurnitureList);
+      this.registerList(FurnitureSetList);
+      
+      // Register navigation items
+      this.registerNavItem("Daily Farming", "farming", {self:true});
+      this.registerNavItem("Characters", "characters", {listName:"CharacterList", isDefault:true});
+      this.registerNavItem("Weapons", "weapons", {listName:"WeaponList"});
+      this.registerNavItem("Artifacts", "artifacts", {listName:"ArtifactList"});
+      this.registerNavItem("Teams", "teams", {listName:"TeamList"});
+      this.registerNavItem("Materials", "materials", {listName:"MaterialList"});
+      this.registerNavItem("Furniture Sets", "furnitureSets", {listName:"FurnitureSetList"});
+      this.registerNavItem("Furniture", "furniture", {listName:"FurnitureList"});
+      
+      this.minimalMode = false;
+      this.initialized = true;
+      
+      console.log('Full initialization complete');
+    }
   }
   
   today()
@@ -344,6 +384,20 @@ export default class GenshinManager extends DataManager
     return super.render(force);
   }
   
+  async renderContent(page)
+  {
+    if (page === 'farming') {
+      return this.renderFarmingPlanner();
+    }
+    
+    // For other pages, ensure full initialization
+    if (this.minimalMode) {
+      await this.ensureFullInitialization();
+    }
+    
+    return super.renderContent(page);
+  }
+  
   addFarmingPlannerEventListeners()
   {
     // Double event toggles
@@ -505,62 +559,139 @@ export default class GenshinManager extends DataManager
   
   retrieve()
   {
-    // Load character build preferences.
-    try
-    {
-      let builds = JSON.parse(window.localStorage.getItem("genshinBuilds") ?? "{}") ?? {};
-      for(let c in builds)
-      {
-        if(!this.buildData[c])
-          this.buildData[c] = [];
-        Object.values(builds[c]).forEach(newBuild => {
-          let overwriteBuild = this.buildData[c].find(oldBuild => oldBuild.name == newBuild.name);
-          if(overwriteBuild)
-          {
-            // check if it's literally the same build, or different with the same name
-            newBuild.name = newBuild.name + " (new)";
-          }
-          this.buildData[c].push(newBuild);
-        });
-      }
+    // Only retrieve if we have full initialization
+    if (!this.minimalMode && this.initialized) {
+      return super.retrieve();
     }
-    catch(x)
-    {
-      console.warn("Could not load local build data.", x);
-      this.errors = true;
-    }
+  }
+  
+  async initMinimal()
+  {
+    console.log('Initializing minimal GenshinManager (no data)');
     
-    // Load the user data from the old way it's stored.
-    let retrievedData;
-    try
-    {
-      retrievedData = JSON.parse(window.localStorage.getItem("genshinAccount") ?? "null");
-      if(retrievedData)
-      {
-        for(let acc in retrievedData)
+    // Initialize only essential components
+    try {
+      // Basic setup without loading heavy data files
+      this.elements['header'] = document.getElementById("viewerHeader");
+      this.elements['main'] = document.getElementById("viewerMain");
+      this.elements['popup'] = document.getElementById("viewerPopup");
+      this.elements['nav'] = document.querySelector("#viewerHeader nav");
+      
+      // Initialize minimal lists (empty state)
+      await this.initMinimalLists();
+      
+      // Setup basic navigation
+      this.renderNav();
+      
+      // Render empty state
+      await this.renderEmptyState();
+      
+      console.log('Minimal GenshinManager initialized successfully');
+    } catch (error) {
+      console.error('Error during minimal initialization:', error);
+      // Fallback to basic empty state
+      this.elements['main'].innerHTML = `
+        <div class="container mt-4">
+          <div class="alert alert-info">
+            <h4>Welcome to Genshin Impact Progression Manager</h4>
+            <p>To get started, import your data using the "Import" button in the menu.</p>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  async load(jsonString, options = {})
+  {
+    // Ensure full initialization before loading data
+    await this.ensureFullInitialization();
+    
+    // Call parent load method
+    return super.load(jsonString, options);
+  }
+
+  async renderEmptyState()
+  {
+    this.elements['main'].innerHTML = `
+      <div class="container mt-4">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card glass-morphism">
+              <div class="card-body text-center p-5">
+                <h2 class="text-hero mb-4">🎮 Genshin Impact Manager</h2>
+                <p class="lead mb-4">Your ultimate companion for tracking characters, weapons, artifacts, and farming schedules.</p>
+                
+                <div class="row g-4 mb-5">
+                  <div class="col-md-6">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <i class="fa-solid fa-users fa-3x text-primary mb-3"></i>
+                        <h5>Character Progression</h5>
+                        <p class="text-muted">Track levels, ascensions, and talent upgrades</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <i class="fa-solid fa-calendar-day fa-3x text-success mb-3"></i>
+                        <h5>Daily Farming Planner</h5>
+                        <p class="text-muted">Optimize your resin usage with priority-based recommendations</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="d-flex gap-3 justify-content-center">
+                  <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#loadModal">
+                    <i class="fa-solid fa-upload me-2"></i>Import Data
+                  </button>
+                  <button class="btn btn-outline-secondary btn-lg" onclick="location.href='showcase.html'">
+                    <i class="fa-solid fa-eye me-2"></i>View Demo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async renderFarmingPlanner()
+  {
+    try {
+      if (!this.farmingPlanner) {
+        this.farmingPlanner = new FarmingPlanner(this);
+      }
+      
+      const summary = this.farmingPlanner.getFarmingSummary();
+      
+      await Renderer.rerender(
+        this.elements.main,
+        summary,
         {
-          for(let srv in retrievedData[acc])
-          {
-            let realAcc = acc+"@"+srv;
-            if(!this.accounts[realAcc])
-              this.accounts[realAcc] = this.createAccount(realAcc);
-            this.accounts[realAcc].loadData(retrievedData[acc][srv]);
-            this.errors = this.errors || this.accounts[realAcc].errors;
-          }
+          template: "genshin/renderFarmingPlanner",
+          showPopup: false
         }
-        console.log("Loaded account data from local storage (old method). This should be converted ot the new method automatically.", {retrievedData, storedData:this.accounts});
-      }
-      else
-      {
-        console.log("No account data to load via the old method (this is good).");
-      }
+      );
+      
+      // Add event listeners
+      this.addFarmingPlannerEventListeners();
+    } catch (error) {
+      console.error('Error rendering farming planner:', error);
+      // Fallback content
+      this.elements.main.innerHTML = `
+        <div class="container mt-4">
+          <div class="alert alert-warning">
+            <h4>Farming Planner</h4>
+            <p>Import your data to access the farming planner features.</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loadModal">
+              Import Data
+            </button>
+          </div>
+        </div>
+      `;
     }
-    catch(x)
-    {
-      console.error("Could not load stored local account data (old method).", x);
-      this.errors = true;
-    }
-    
-    return super.retrieve();
   }
 }

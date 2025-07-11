@@ -311,8 +311,49 @@ async function addEventListeners()
 async function init()
 {
   console.debug(`Initting GenshinManager`);
+  
+  // Check if we have existing data first to determine loading strategy
+  const hasExistingData = checkForExistingData();
+  
+  if (!hasExistingData) {
+    console.log('No existing data found. Using minimal loading strategy.');
+    await initMinimal();
+  } else {
+    console.log('Existing data found. Loading full manager.');
+    await initFull();
+  }
+}
+
+function checkForExistingData() {
+  try {
+    // Check for any stored data
+    const goodData = window.localStorage.getItem("goodData");
+    const genshinBuilds = window.localStorage.getItem("genshinBuilds");
+    
+    // If we have any meaningful data, return true
+    return (goodData && goodData !== '{}' && goodData !== 'null') || 
+           (genshinBuilds && genshinBuilds !== '{}' && genshinBuilds !== 'null');
+  } catch (error) {
+    console.warn('Error checking for existing data:', error);
+    return false;
+  }
+}
+
+async function initMinimal() {
+  // Load only essential components for empty state
+  console.debug(`Loading minimal GenshinManager`);
   const {default:GenshinManager} = await window.importer.get(`js/genshin/GenshinManager.js`);
-  console.debug(`Loading GenshinManager`, GenshinManager);
+  console.debug(`Loading minimal GenshinManager`, GenshinManager);
+  window.viewer = new GenshinManager();
+  await window.viewer.initMinimal();
+  setInterval(window.viewer.today.bind(window.viewer), 60000);
+}
+
+async function initFull() {
+  // Load full manager with all dependencies
+  console.debug(`Loading full GenshinManager`);
+  const {default:GenshinManager} = await window.importer.get(`js/genshin/GenshinManager.js`);
+  console.debug(`Loading full GenshinManager`, GenshinManager);
   window.viewer = new GenshinManager();
   window.viewer.retrieve();
   setInterval(window.viewer.today.bind(window.viewer), 60000);
