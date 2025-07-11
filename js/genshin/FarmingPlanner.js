@@ -357,8 +357,8 @@ export default class FarmingPlanner extends UIController
         return b.deficit - a.deficit;
       });
       
-      // Limit results to prevent UI overload
-      const maxResults = 20;
+      // Limit results to prevent UI overload and memory issues
+      const maxResults = 10;
       return smartFiltered.slice(0, maxResults);
       
     } catch (error) {

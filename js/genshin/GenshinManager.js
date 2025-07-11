@@ -402,21 +402,32 @@ export default class GenshinManager extends DataManager
   
   async render(force=false)
   {
-    // Handle farming planner rendering
+    // Handle farming planner rendering with safety check
     if(this.currentView === this.constructor.name)
     {
-      const summary = this.farmingPlanner.getFarmingSummary();
-      let render = await Renderer.rerender(
-        this.elements[this.constructor.name].querySelector(`[data-uuid="${this.farmingPlanner.uuid}"]`),
-        { item: this.farmingPlanner, summary: summary },
-        {
-          template: this.farmingPlanner.constructor.templateName,
-          parentElement: this.elements[this.constructor.name],
-        }
-      );
+      // Ensure farming planner is initialized
+      if (!this.farmingPlanner) {
+        console.warn('FarmingPlanner not initialized yet, skipping render');
+        return;
+      }
       
-      // Add event listeners for the farming planner
-      this.addFarmingPlannerEventListeners();
+      try {
+        const summary = this.farmingPlanner.getFarmingSummary();
+        let render = await Renderer.rerender(
+          this.elements[this.constructor.name].querySelector(`[data-uuid="${this.farmingPlanner.uuid}"]`),
+          { item: this.farmingPlanner, summary: summary },
+          {
+            template: this.farmingPlanner.constructor.templateName,
+            parentElement: this.elements[this.constructor.name],
+          }
+        );
+        
+        // Add event listeners for the farming planner
+        this.addFarmingPlannerEventListeners();
+      } catch (error) {
+        console.error('Error rendering farming planner:', error);
+        return;
+      }
       
       let footer = document.getElementById("footer");
       footer.classList.add("d-none");
