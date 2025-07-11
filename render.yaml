@@ -1,0 +1,20 @@
+# Render.com configuration
+# DEPLOYMENT METHOD: Docker-based web service with nginx and authentication
+
+services:
+  - type: web
+    name: progression-manager
+    env: docker
+    dockerfilePath: ./Dockerfile
+    region: frankfurt
+    plan: free
+    branch: main
+    repo: https://github.com/brdick/progression-manager
+    autoDeploy: true
+    # No disk needed for this static site
+    envVars:
+      - key: DEPLOYMENT_PLATFORM
+        value: render
+      - key: AUTH_METHOD
+        value: http_basic
+    # Docker handles everything - no separate build/start commands needed

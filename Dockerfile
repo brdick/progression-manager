@@ -1,3 +1,7 @@
+# Dockerfile for Render.com deployment
+# This is the PREFERRED deployment method for this application
+# Uses nginx to serve static files with HTTP Basic Authentication
+
 # Use nginx to serve static files
 FROM nginx:alpine
 
@@ -13,12 +17,14 @@ RUN chmod +x /tmp/setup-auth.sh && \
     ./setup-auth.sh && \
     mv .htpasswd /etc/nginx/.htpasswd && \
     echo "=============================================" && \
-    echo "🔑 AUTHENTICATION CREDENTIALS - SAVE THESE!" && \
+    echo "🔑 RENDER.COM AUTHENTICATION CREDENTIALS" && \
+    echo "🔑 SAVE THESE CREDENTIALS IMMEDIATELY!" && \
     echo "=============================================" && \
     cat .auth_credentials && \
     echo "=============================================" && \
     echo "⚠️  IMPORTANT: Save the credentials above!" && \
     echo "   You will need them to access your site." && \
+    echo "   Check Render build logs for these credentials." && \
     echo "=============================================" && \
     echo "🔍 Verifying setup..." && \
     test -f /etc/nginx/.htpasswd && echo "✅ .htpasswd file created" || echo "❌ .htpasswd file missing" && \

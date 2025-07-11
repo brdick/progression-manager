@@ -1,5 +1,5 @@
-# PowerShell deployment script for DigitalOcean App Platform
-# This script helps with manual deployment tasks
+# PowerShell deployment script for Render.com
+# This script helps with manual deployment tasks and validation
 
 param(
     [string]$Action = ""
@@ -7,6 +7,8 @@ param(
 
 Write-Host "🚀 Progression Manager Deployment Script" -ForegroundColor Green
 Write-Host "========================================"
+Write-Host "Platform: Render.com FREE Tier" -ForegroundColor Cyan
+Write-Host ""
 
 # Check if doctl is installed
 if (!(Get-Command doctl -ErrorAction SilentlyContinue)) {

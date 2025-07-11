@@ -8,7 +8,15 @@ I made this mostly for myself, and my main concern is that it works the way I wa
 
 # Deployment
 
-This application is configured for automatic deployment on DigitalOcean's App Platform with built-in HTTP Basic Authentication. The deployment setup includes:
+This application is configured for automatic deployment on **Render.com's FREE tier** with professional-grade HTTP Basic Authentication.
+
+## 🚀 Render.com FREE Tier (Recommended)
+- **100% FREE web services** (not just static sites!)
+- **750 hours/month** (enough for always-on personal use)
+- **Server-side HTTP Basic Authentication** with randomly generated passwords
+- **Automatic HTTPS** with SSL certificates
+- **Docker support** for reliable, consistent deployments
+- **No credit card required** for free tier
 
 ## 🔐 Security Features
 - **HTTP Basic Authentication**: Automatically generates secure login credentials during build
@@ -16,32 +24,33 @@ This application is configured for automatic deployment on DigitalOcean's App Pl
 - **Nginx-Level Protection**: Authentication handled at the web server level, not in the application
 - **Automatic Cleanup**: Setup files are automatically deleted after deployment for security
 
-## DigitalOcean App Platform
-- **App Spec Configuration**: `.do/app.yaml` - Defines how the app should be deployed
+## Render.com Platform
+- **Render Configuration**: `render.yaml` - Defines how the app should be deployed
 - **Automatic Deployment**: Deploys automatically when changes are pushed to the `main` branch
-- **Static Site Hosting**: Optimized for serving static files with CDN and HTTPS
+- **Docker-based Hosting**: Reliable container deployment with full authentication support
 
 ## Getting Started with Deployment
 1. **Fork this repository** to your GitHub account
-2. **Connect to DigitalOcean**: Link your GitHub account in the DigitalOcean console
-3. **Create App**: Use the provided app spec file (`.do/app.yaml`) to create a new app
-4. **Deploy**: The app will automatically deploy and provide you with a URL
-5. **⚠️ IMPORTANT**: Check the build logs for your login credentials and save them!
+2. **Sign up at [Render.com](https://render.com/)** (free, no credit card required)
+3. **Connect GitHub**: Link your GitHub account in Render dashboard
+4. **Create Web Service**: Select your forked repository and configure as Docker service
+5. **Deploy**: The app will automatically build and deploy with a free HTTPS URL
+6. **⚠️ IMPORTANT**: Check the build logs for your login credentials and save them!
 
 ## Authentication
 After deployment, your site will be protected with HTTP Basic Authentication:
 - **Username**: admin (default)
-- **Password**: Randomly generated during build (check build logs)
+- **Password**: Randomly generated during build (check Render build logs)
 - **Access**: All visitors must enter these credentials to view the site
 
 ## Deployment Files
-- `.do/app.yaml` - DigitalOcean App Platform configuration
-- `Dockerfile` - Alternative Docker deployment option
+- `render.yaml` - Render.com service configuration
+- `Dockerfile` - Docker container build instructions with authentication
 - `nginx.conf` - Nginx configuration for optimized static file serving
-- `deploy.sh` / `deploy.ps1` - Deployment scripts for manual operations
-- `.github/workflows/deploy.yml` - GitHub Actions for automated deployment
+- `setup-auth.sh` - Script that generates random authentication credentials
+- `.github/workflows/deploy.yml` - GitHub Actions for validation
 
-For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For detailed deployment instructions, see [RENDER-DEPLOYMENT.md](RENDER-DEPLOYMENT.md).
 
 # Genshin Impact
 Features include:

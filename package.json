@@ -4,10 +4,7 @@
   "description": "A site where you can record all of your characters/items/etc. for a few different games (Genshin Impact, Wuthering Waves), and keep track of everything you need to progress",
   "main": "index.html",
   "scripts": {
-    "start": "echo 'This is a static site - no server needed'",
-    "build": "echo 'No build process required'",
-    "deploy": "echo 'Deploying static files'",
-    "validate": "echo 'Validating deployment files...' && test -f index.html && test -f setup-auth.sh && test -f Dockerfile && test -f nginx.conf && echo 'All required files present'"
+    "validate": "echo 'Validating deployment files...' && test -f index.html && test -f setup-auth.sh && test -f Dockerfile && test -f nginx.conf && test -f render.yaml && echo 'All required files present for Render deployment'"
   },
   "repository": {
     "type": "git",
@@ -18,12 +15,11 @@
     "progression",
     "genshin-impact",
     "wuthering-waves",
-    "static-site"
+    "static-site",
+    "docker",
+    "nginx"
   ],
   "author": "brdick",
   "license": "MIT",
-  "homepage": "https://github.com/brdick/progression-manager",
-  "engines": {
-    "node": ">=16.0.0"
-  }
+  "homepage": "https://github.com/brdick/progression-manager"
 }

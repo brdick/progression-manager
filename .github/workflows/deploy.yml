@@ -1,4 +1,4 @@
-name: Deploy to DigitalOcean App Platform
+name: Deploy to Render.com
 
 on:
   push:
@@ -14,11 +14,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Deploy to DigitalOcean App Platform
-      uses: digitalocean/app_action@v1.1.5
-      with:
-        app_name: progression-manager
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+    - name: Trigger Render Deploy
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🚀 Deployment will be triggered automatically by Render.com"
+        echo "   Check your Render dashboard for build progress"
+        echo "   Look for authentication credentials in build logs"
         
   validate:
     runs-on: ubuntu-latest
@@ -36,14 +37,19 @@ jobs:
         test -f setup-auth.sh
         test -f Dockerfile
         test -f nginx.conf
-        echo "Static files validation passed"
+        test -f render.yaml
+        echo "✅ All required files present for Render deployment"
         
     - name: Check for JavaScript errors
       run: |
         # Basic syntax check for JavaScript files
-        find js/ -name "*.js" -exec node -c {} \; || echo "Some JS files may have syntax issues"
+        find js/ -name "*.js" -exec node -c {} \; || echo "⚠️  Some JS files may have syntax issues"
         
     - name: Test authentication setup script
       run: |
         chmod +x setup-auth.sh
-        echo "Authentication setup script is executable"
+        echo "✅ Authentication setup script is executable"
+        
+    - name: Validate Render configuration
+      run: |
+        test -f render.yaml && echo "✅ Render configuration found" || echo "❌ render.yaml missing"

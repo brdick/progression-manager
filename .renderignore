@@ -1,0 +1,20 @@
+# Files to ignore during Render deployment
+# These files are not needed for the Docker-based deployment
+
+# DigitalOcean specific files (not needed for Render)
+.do/
+*.do.*
+
+# Alternative deployment files
+FREE-TIER-GUIDE.md
+RENDER-VS-DIGITALOCEAN.md
+
+# Development files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
