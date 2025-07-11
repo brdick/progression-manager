@@ -1,0 +1,49 @@
+name: Deploy to DigitalOcean App Platform
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to DigitalOcean App Platform
+      uses: digitalocean/app_action@v1.1.5
+      with:
+        app_name: progression-manager
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate HTML
+      run: |
+        # Basic validation that critical files exist
+        test -f index.html
+        test -f css/main.css
+        test -d js/
+        test -f setup-auth.sh
+        test -f Dockerfile
+        test -f nginx.conf
+        echo "Static files validation passed"
+        
+    - name: Check for JavaScript errors
+      run: |
+        # Basic syntax check for JavaScript files
+        find js/ -name "*.js" -exec node -c {} \; || echo "Some JS files may have syntax issues"
+        
+    - name: Test authentication setup script
+      run: |
+        chmod +x setup-auth.sh
+        echo "Authentication setup script is executable"

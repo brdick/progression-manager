@@ -1,0 +1,17 @@
+# DigitalOcean App Platform configuration
+# This file defines how your app should be built and deployed
+
+name: progression-manager
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: brdick/progression-manager
+    branch: main
+    deploy_on_push: true
+  dockerfile_path: Dockerfile
+  http_port: 80
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  routes:
+  - path: /
